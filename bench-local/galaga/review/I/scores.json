@@ -1,0 +1,212 @@
+{
+ "letter": "I",
+ "items": {
+  "A1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Single file, no external resources, no placeholders (1-749); but group literal at 218-227 is malformed JS (slots:[3,0],[3,1],... without outer array)."
+  },
+  "A2": {
+   "score": 0,
+   "evidence": "result.json loads_clean=false, pageerror \"Unexpected token ','\" at t=0; reproduced with node --check at line 218 ({pat:'left', slots:[3,0],[3,1],...}). Whole script dead; all screenshots black."
+  },
+  "A3": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Accumulator loop with DT=1/60 on requestAnimationFrame, clamped at 0.1 s (739-745); enemy bullets step s.vx/60 per tick (545)."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Clear sections: state G/player/enemies (184-195), update (608-619), render (680-736), brief comments; some dead/odd code (298, 540 condition)."
+  },
+  "B1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. 224x288 canvas, integer scale via floor(min(...)) (19-25), image-rendering pixelated, flex-centred on black body (7-9)."
+  },
+  "B2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. 75 stars, 7 colours, scroll by speed (117-122), sine twinkle alpha (123-130)."
+  },
+  "B3": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. 1UP+score, HIGH SCORE, reserve ships bottom-left, flags bottom-right (643-649). Stage 1 shows no badge (flagValues(stage-1), 647)."
+  },
+  "B4": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Title with GALAGA, score table per enemy, blinking PRESS ENTER TO START (661-679). Never drawn in test (blank screenshot)."
+  },
+  "B5": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Intro 'STAGE N'/'CHALLENGING STAGE' (597-599, 709-711), GAME OVER (724), stats then title (585-591). Note: update() returns at 612 for title before updateFlow, so pressed('Enter') at 593 is never checked and the game could never start even with the syntax fixed."
+  },
+  "B6": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Loaded at 185, saved in addScore (267) and at game over (588)."
+  },
+  "C1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Arrows/A/D (38, 333-336), Space autofire (338-341), P pause (33, 610), but Enter-to-start is dead: title branch of update returns at 612 before updateFlow (593)."
+  },
+  "C2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. fire() returns if shots.length>=2 (299); dual fires min(2,2-shots) (300)."
+  },
+  "C3": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. reserve=2 (601), extra at 20000 then +70000 (268)."
+  },
+  "C4": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Stats state shows shots, hits, hit-miss ratio % (725-733); shotsFired 304, hits 373."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Distinct Zako/Goei/Boss pixel sprites with two frames each (92-115), flap frame chosen at 628-632."
+  },
+  "D2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. pointFor: zako 50/100, goei 80/160, boss 150/400/800/1600 by diving escorts (270-277). Challenging-stage hits use these, not 100."
+  },
+  "D3": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Boss hp 2 (235), first hit sets hp=1 (521), damaged sprite PAL_BOSS2 blue/purple (109, 632)."
+  },
+  "D4": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Slots (217-228): row0 cols 3-6 = 4 boss, rows1-2 cols1-8 = 16 goei, rows3-4 cols0-9 = 20 zako (typeOfRow 232)."
+  },
+  "D5": {
+   "score": 0,
+   "evidence": "Entry paths exist (158-168, 419-424) but nothing ever sets state='enter': newEnemy starts state 'wait' (234), spawnGroup only sets wait/pat (239-244), and at 411-412 a waiting enemy without diveAfter just stays 'wait' forever, invisible at (-40,-40). No enemy can ever reach the formation."
+  },
+  "D6": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Sway sin term always applied, breathing scale once form.filled (199-203, 387-388); filled can never become true because of the D5 bug."
+  },
+  "D7": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Curved dive bezier toward player (169-175), fire while diving (431), exit bottom then returnPath from top to slot (433-445). Only reachable from 'form' state, which is never reached (D5)."
+  },
+  "D8": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Boss takes 1-2 goei escorts (353-359, 412, 502-504); dive timer and boss chance scale with stage (397, 404)."
+  },
+  "D9": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Enemy bullets kill player (543-548); ram kills both (550-557)."
+  },
+  "E1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Boss flies to y=96 and stops (362-368, 432), beam widens over 45 ticks with animated stripes (446-449, 650-660)."
+  },
+  "E2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Capture check against cone (455-461), ship pulled up in red sprite (490-499, 706), held above boss in formation (415), ship lost / game over if last (319-323)."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "Shooting a diving boss sets e.cap.state='free' (524-525) but killEnemy then removes the boss from enemies (377); the captive lives only on b.cap, and both its update (474-488) and its drawing (696-697) iterate enemies, so the freed fighter vanishes and can never dock."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "Dual fighter code exists (300-303, 310-313, 333, 509, 702) but player.dual is only set at 478, which is unreachable (E3). Can never trigger."
+  },
+  "E5": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Formation kill sets captive 'hostile' with an exit path (526-530); because the boss is removed (377) the captive just disappears rather than flying off, but it does not return."
+  },
+  "E6": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Captive fires while its boss dives (429-430)."
+  },
+  "F1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Stage cleared when no enemies left -> nextStage (565-571, 596). A normal stage can never be cleared because enemies stay in 'wait' (D5)."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "isChal at 3,7,11 (204), 5 waves of 8 on loop paths (246-262, 576). But a challenger shot by the player goes through killEnemy (531, 369-379), which never decrements G.waveAlive, so the wave-end check (573) never passes and the stage soft-locks after any hit; challengers also fire (431 has no e.chal check)."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "G.totalHits and G.waveHits are never incremented anywhere (only reset at 213, 575, 602), so NUMBER OF HITS is always 0, no 1,000 wave bonus, no PERFECT; hits score pointFor() values, not 100 (374)."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Greedy split into 50/30/20/10/5/1 flags (640-648)."
+  },
+  "G1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Shot, hit, boss hit, explosion, beam, capture, jingle (64-77); enemy hit and enemy destroyed share sHit (375). All but one."
+  },
+  "G2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. AudioContext created/resumed on keydown (30, 42-43); M toggles mute (32, 45)."
+  },
+  "H1": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Boxes hw/hh 5-6 vs 12-16 px sprites, player 5x6 vs 13x13 (195, 509-510, 518)."
+  },
+  "H2": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. 4-frame expanding explosion for enemies and bigger for player (280-293, 616)."
+  },
+  "H3": {
+   "score": 1,
+   "evidence": "Capped at 1: script fails to parse (lines 218-227), nothing runs. Respawn after 130 ticks with READY (316, 327-329, 712-713); dives blocked while respawning/READY (389). Player is never activated at game start (startGame sets active=false, respawn=0, 603; resetPlayer only via 329)."
+  }
+ },
+ "total": 32,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "218-227",
+   "text": "Syntax error: group objects written as slots:[3,0],[3,1],... (missing outer array) -> 'Unexpected token ,'; the whole script fails to parse, page stays black."
+  },
+  {
+   "severity": "severe",
+   "lines": "593, 612",
+   "text": "Game can never start: update() returns for the title state before updateFlow(), so pressed('Enter') is never checked (prevKeys also never updated in title)."
+  },
+  {
+   "severity": "severe",
+   "lines": "234, 239-244, 411-412",
+   "text": "Enemies never enter: no code sets state='enter'; spawned enemies stay in 'wait' forever off-screen, so no formation, no dives and the stage can never be cleared."
+  },
+  {
+   "severity": "severe",
+   "lines": "196, 326-331, 603",
+   "text": "Player never appears at game start: startGame sets active=false and respawn=0, and resetPlayer is only called when respawn counts down to 0."
+  },
+  {
+   "severity": "severe",
+   "lines": "369-379, 573",
+   "text": "Challenging stage soft-locks once any challenger is shot: killEnemy never decrements G.waveAlive, so the wave never ends."
+  },
+  {
+   "severity": "minor",
+   "lines": "377, 474-488, 696",
+   "text": "Rescued/hostile captive disappears with its boss because it is stored on the removed boss; dual fighter can never form."
+  },
+  {
+   "severity": "minor",
+   "lines": "213, 373-374, 574-577, 716-722",
+   "text": "Challenging stage hits/wave bonuses/PERFECT never counted (totalHits/waveHits never incremented); hits score normal values, not 100."
+  },
+  {
+   "severity": "minor",
+   "lines": "431",
+   "text": "Challenging-stage enemies fire (no e.chal check)."
+  },
+  {
+   "severity": "minor",
+   "lines": "564, 712",
+   "text": "readyTimer only counts down in 'play', so READY stays on screen for the whole challenging stage."
+  },
+  {
+   "severity": "minor",
+   "lines": "647",
+   "text": "No stage badge shown on stage 1 (flags computed from stage-1)."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "The file is a compact, readably structured Galaga attempt (sprite data, bezier path helper, fixed-timestep loop, beam/capture state machine, synthesized sounds) that never runs: a malformed object literal at lines 218-227 is a parse error, so the page is black from load to the end of the play test. Even with that fixed it would still not be playable: Enter is never processed on the title screen, the player is never activated at game start, and enemies are never switched into their entry flight, so no formation or dives could happen. Beyond those blockers, the rescue/dual-fighter path loses the captive when the boss is removed, and challenging stages soft-lock after any hit and never count hits or bonuses. The design shows good knowledge of Galaga, but as delivered it is not playable."
+}

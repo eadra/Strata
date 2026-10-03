@@ -1,0 +1,222 @@
+{
+ "letter": "T",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single complete file (957 lines), no placeholders; sprites as string data (30-201), audio synthesized (210-241); no external resources."
+  },
+  "A2": {
+   "score": 2,
+   "evidence": "result.json: loads_clean, survives_play true, errors []. Top-level `let captured` (494) is declared before any function using it runs, so no TDZ error."
+  },
+  "A3": {
+   "score": 2,
+   "evidence": "Accumulator loop on requestAnimationFrame with STEP=1/60 and dt clamp (943-954); update() runs per fixed step, render once per frame."
+  },
+  "A4": {
+   "score": 2,
+   "evidence": "Clear sections (sprites, audio, input, state, paths, stage setup, enemies, collisions, update, rendering, flow) with update() (701) and render() (845) separate; global state but readable names and short comments."
+  },
+  "B1": {
+   "score": 2,
+   "evidence": "Canvas 224x288 (13), scaled by min(innerWidth/W,innerHeight/H) with image-rendering:pixelated (9,19), flex-centred on black (7-8). Scaling is non-integer but crisp."
+  },
+  "B2": {
+   "score": 2,
+   "evidence": "70 stars in 4 colours (270), scroll at varied speeds (695-700), twinkle via sin alpha (780-788); visible in all screenshots."
+  },
+  "B3": {
+   "score": 2,
+   "evidence": "1UP + score and HIGH SCORE (792-795), reserve ships bottom-left (797-799), badges bottom-right (800-817); seen in 2-after-enter-5s.png. Badge composition is wrong (scored under F4)."
+  },
+  "B4": {
+   "score": 2,
+   "evidence": "Title (885-903): GALAGA logo, 1UP/high, sprite score table 150/80/50 (formation values only), blinking PRESS ENTER TO START (1-title.png)."
+  },
+  "B5": {
+   "score": 2,
+   "evidence": "STAGE N overlay during stageIntro (704-707, 904-908), GAME OVER overlay (909-917), Enter returns to title (252, 936-940). The return needs a key press rather than being automatic; the challenge-results overlay also overlaps the next STAGE overlay (879-881) because challEnd stays true until setupStage."
+  },
+  "B6": {
+   "score": 2,
+   "evidence": "Loaded from localStorage at 262, saved in addScore (376) with try/catch."
+  },
+  "C1": {
+   "score": 2,
+   "evidence": "Arrows and A/D move x only (426-430), Space fires (431), Enter starts (250-251), P pauses in play/intro (254), M mutes (255)."
+  },
+  "C2": {
+   "score": 2,
+   "evidence": "firePlayer stops adding when pShots.length>=2 (403)."
+  },
+  "C3": {
+   "score": 2,
+   "evidence": "ships=3 including the one in play (261, 931; reserves drawn as ships-1 at 797); extra ship at 20000 then +70000 (372-375), capped at 6."
+  },
+  "C4": {
+   "score": 1,
+   "evidence": "Results overlay shows SHOTS FIRED, HITS, RATIO % (912-915), but shotsFired is never incremented anywhere (only set at 263/932), so it always shows 0 shots and 0% (5-end.png: SHOTS FIRED 0, HITS 10, RATIO 0%)."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Distinct zako/goei/boss sprites (65-200). Flap is broken: animT resets to 0 every 12 ticks (499-500) and frame = animT>0 (853), so frame A shows 1 tick in 12; Boss never animates because spriteFor returns bB or b2B unconditionally (207)."
+  },
+  "D2": {
+   "score": 1,
+   "evidence": "Zako 50/100, Goei 80/160, Boss 150 in formation (482-486) correct. Diving boss = 400+400*escorts (486) gives 400/800/1200, not 1600 with two escorts; escort count is never reduced when escorts die."
+  },
+  "D3": {
+   "score": 2,
+   "evidence": "Boss hp 2 (326); first hit sets boss2 and switches to the blue/purple b2 sprite (664-669, 207)."
+  },
+  "D4": {
+   "score": 2,
+   "evidence": "SLOTS: 4 boss row 0, 16 goei rows 1-2, 20 zako rows 3-4 (273-276). Zako columns -64..80 sit 8px right of the other rows (visible asymmetry in 3-after-enter-8s.png)."
+  },
+  "D5": {
+   "score": 1,
+   "evidence": "Groups enter on bezier paths from bl/br/tl/tr/bc with staggered delays (292-301, 339-352) and blend into slots (511-515). But the bottom entries sweep through the player's row: bl/br curves reach y~260 around x 75-105 / 120-150, and the 'bc' boss path (299) climbs straight up x=112, the player's spawn x. The bot lost all 3 ships within ~8 s with 0 points (2-after-enter-5s.png: 1 reserve left, bosses not yet in; 3-after-enter-8s.png: no player, one boss missing; 4-play-015s.png: GAME OVER, HITS 0)."
+  },
+  "D6": {
+   "score": 1,
+   "evidence": "slotPos (277-284) sways with amplitude scaled by the count in formation while <40 and breathes (vertical row spacing only) only when all 40 are in 'form'. Dives start 60 frames into the stage (267, 740-746) and any kill drops the count below 40, so breathing is practically never seen and the formation goes back to swaying."
+  },
+  "D7": {
+   "score": 2,
+   "evidence": "divePath bezier toward the player ending at y=300 (302-309), fire while diving (533), returnPath from y=-8 back to the slot (310-313, 561-577). Beam-dive escorts end mid-screen and then teleport to the top (456-458, 526-530), a visible glitch."
+  },
+  "D8": {
+   "score": 2,
+   "evidence": "Boss beam dives take 0-2 Goei escorts on offset paths (448-459); dive interval max(25,80-stage*6) (744), beam and escort chances rise with stage (442, 449), dive and bullet speed rise (308, 436)."
+  },
+  "D9": {
+   "score": 2,
+   "evidence": "Enemy bullets kill (624-634); body collision kills the player and removes the rammed enemy with an explosion (636-648)."
+  },
+  "E1": {
+   "score": 2,
+   "evidence": "Boss beam dive ends at y 150-230 (446, 526-527) and enters 'beam' state; drawBeamCone draws a widening animated blue cone with moving bands (819-833)."
+  },
+  "E2": {
+   "score": 1,
+   "evidence": "Capture (543-553) is instant: no pull-up; the red captured sprite is drawn above the boss at e.y-24 (855-858) and loseShip runs (game over if last, 378-382). The capture width is full from the first frame (544) rather than following the drawn widening beam."
+  },
+  "E3": {
+   "score": 1,
+   "evidence": "Hitting a diving/beaming boss with a captive pushes a freed ship that descends and docks (650-663, 677-692). But it is freed on the first hit even though the boss survives, and it spawns at the stale capture position stored at 547 (never updated), so it appears away from the boss."
+  },
+  "E4": {
+   "score": 2,
+   "evidence": "Two halves via player.left/right offset by 8 (392-395), move together, each fires a shot (399-405, still capped at 2), each half is hit separately (627-628, 640-641)."
+  },
+  "E5": {
+   "score": 2,
+   "evidence": "Killing a captive boss outside dive/beam (formation or return) goes through destroyEnemy, which removes the captive (475-479); it never returns."
+  },
+  "E6": {
+   "score": 2,
+   "evidence": "While a boss with a captive is in 'dive', the captive fires every 40 ticks (534-537)."
+  },
+  "F1": {
+   "score": 2,
+   "evidence": "A normal stage advances when enemies is empty (769-771) via stageIntro."
+  },
+  "F2": {
+   "score": 2,
+   "evidence": "stage%4===3 (333) gives 5 waves of 8 (355-366, 749-759) on a 5-segment looping path (314-322), no firing or diving (chall state 578-588; dives gated by !challenging at 740), removed at path end. All waves use the same path and type mix."
+  },
+  "F3": {
+   "score": 1,
+   "evidence": "100 per hit (481), +1000 when waveDestroyed===8 (752), +10000 at 40 (757); NUMBER OF HITS shown (918-923), but the bonus is only shown for PERFECT; wave bonuses appear only as short popups, not in the results."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "Uses the 1/5/10/20/30/50 values and colours (801-817), but shows the current stage's single 'denomination' plus the previous one instead of composing the stage number (stage 2 shows a '5' badge, stage 4 a '20'). Wrong rule."
+  },
+  "G1": {
+   "score": 2,
+   "evidence": "shot, ehit, edest, bossHit, pboom, beam and stage jingle are defined (229-241) and called (406, 491, 668, 385, 527, 706). ehit is only used for losing one dual half, not for a normal enemy hit; all but one requirement met."
+  },
+  "G2": {
+   "score": 2,
+   "evidence": "audioInit on every keydown creates/resumes the context (212, 247); M toggles muted, checked in tone/noise (214, 222, 255)."
+  },
+  "H1": {
+   "score": 2,
+   "evidence": "Enemy box 12x12 vs 14x16 sprites (604, 640); player half box 8x12 vs a ~10x16 drawn ship (627-628); shots 3x8 match the drawing (866)."
+  },
+  "H2": {
+   "score": 2,
+   "evidence": "Frame-counted expanding ring explosions for enemies (490) and a bigger white one for the player (386), 20/30 frames (727-730, 834-844)."
+  },
+  "H3": {
+   "score": 1,
+   "evidence": "Respawn after 90 ticks with 90 ticks of invulnerability (381, 416-421); new dives blocked while dead or readyT>0 (740). readyT is set (420) but no 'READY' text is ever drawn (the string does not appear in the file)."
+  }
+ },
+ "total": 66,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "295-299, 339-352, 636-648",
+   "text": "Entry paths from the bottom fly through the player's row, and the 'bc' Boss Galaga path climbs straight up x=112, the player's spawn x. Each stage start rams the player; in the play-test all 3 ships were lost within ~8 s with 0 points (screenshots 2, 3, 4-play-015s)."
+  },
+  {
+   "severity": "minor",
+   "lines": "263, 912-915",
+   "text": "shotsFired is never incremented, so the results screen always shows SHOTS FIRED 0 and RATIO 0% (5-end.png: HITS 10, SHOTS 0)."
+  },
+  {
+   "severity": "minor",
+   "lines": "207, 499-500, 853",
+   "text": "Wing-flap animation broken: zako/goei show frame A only 1 tick in 12; Boss Galaga never animates."
+  },
+  {
+   "severity": "minor",
+   "lines": "486",
+   "text": "A diving boss with two escorts scores 1200 instead of 1,600; the escort count is not reduced when escorts die."
+  },
+  {
+   "severity": "minor",
+   "lines": "547, 650-663",
+   "text": "The captured fighter is freed on the first hit while the boss survives, and it appears at the stale capture coordinates instead of the boss's current position."
+  },
+  {
+   "severity": "minor",
+   "lines": "543-553",
+   "text": "No pull-up on capture: the ship vanishes and the red fighter appears above the boss instantly. The capture width ignores the beam's drawn widening."
+  },
+  {
+   "severity": "minor",
+   "lines": "277-284",
+   "text": "Breathing happens only when all 40 are in formation; any dive or kill switches back to swaying, so breathing is practically never seen."
+  },
+  {
+   "severity": "minor",
+   "lines": "420, 845-884",
+   "text": "No READY text on respawn (readyT only gates dives)."
+  },
+  {
+   "severity": "minor",
+   "lines": "801-817",
+   "text": "Stage badges show one denomination per stage number (stage 2 = '5') instead of composing the stage from 1/5/10/20/30/50 badges."
+  },
+  {
+   "severity": "minor",
+   "lines": "456-458, 526-530, 310-313",
+   "text": "Goei escorts end their dive mid-screen and then teleport to y=-8 to return."
+  },
+  {
+   "severity": "minor",
+   "lines": "879-881, 761-765",
+   "text": "The challenge results overlay keeps drawing over the next STAGE N overlay because challEnd is only reset in setupStage."
+  },
+  {
+   "severity": "minor",
+   "lines": "918-923",
+   "text": "Challenging-stage results show the bonus only for PERFECT; per-wave bonuses are not summarised."
+  }
+ ],
+ "verdict": "playable with flaws",
+ "summary": "A compact, well-sectioned single file with a proper fixed-timestep loop, clean separation of update and render, and most Galaga systems present in working form: curved group entries, dives that return from the top, boss beam dives with escorts, capture, rescue into a dual fighter that loses one half at a time, challenging stages with correct per-hit, per-wave and perfect scoring, synthesized sounds and a localStorage high score. The details undercut how faithful it feels. The bottom entry paths, especially the bosses' straight climb up the player's spawn column, ram the player at every stage start; in the play-test this ended the game in about 8 seconds with no score. The shots-fired counter is never incremented, so the hit-miss ratio is always 0%. Wing flaps barely show and bosses never flap, capture has no pull-up, the freed ship appears at a stale position, breathing is almost never visible, there is no READY text, and the badges follow the wrong rule. A player who learns to dodge the entry lanes gets a recognisable, mostly working Galaga, but it feels rough."
+}

@@ -1,0 +1,222 @@
+{
+ "letter": "D",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single file L1-840, no external resources, no placeholders; script parses (node --check ok)."
+  },
+  "A2": {
+   "score": 0,
+   "evidence": "result.json: loads_clean false, pageerror 'Assignment to constant variable.' at t=0.1. Cause: L32 'const keys={}, pressed={}' then L403 'pressed={};' (and L379) in update(). Exception escapes frame() before requestAnimationFrame(frame) at L835, so the loop stops after the first update; every screenshot is the same frozen title."
+  },
+  "A3": {
+   "score": 1,
+   "evidence": "Correct fixed-timestep accumulator on rAF (L825-837, DT=1000/60, 250 ms clamp), but it dies on the first update() (L403 const reassign). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "Separate update*/render* functions and state block (L154-163, L375-622, L651-822), but dense one-liners, and render mutates state: renderHits decrements timer and changes mode (L819-821), explosions/floaters age in render (L769-778)."
+  },
+  "B1": {
+   "score": 2,
+   "evidence": "224x288 canvas (L13), integer scale via Math.floor (L26), pixelated (L9), flex-centred on black (L7-8); runs at load and visible in 1-title.png."
+  },
+  "B2": {
+   "score": 1,
+   "evidence": "85 multi-coloured stars that scroll (L150-152) and twinkle via alpha (L654-657), but updateStars only runs inside update(), which dies on frame 1: screenshots show a static field."
+  },
+  "B3": {
+   "score": 1,
+   "evidence": "renderHUD has 1UP, HIGH SCORE, reserve ships bottom-left, badges bottom-right (L680-706). Never shown: title mode skips HUD (L660) and play is unreachable. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "B4": {
+   "score": 1,
+   "evidence": "Title with logo and table (L785-802), but the table prints r[1]=100 for every enemy ('100 POINTS' x3, visible in 1-title.png) instead of 50/80/150, and the blinking 'PRESS ENTER TO START' (L800, (tick>>5)&1) is off at tick 0 and the loop is frozen, so it is never displayed."
+  },
+  "B5": {
+   "score": 1,
+   "evidence": "'STAGE N' (L665) and 'GAME OVER' (L673) exist, but after game over the 'hits' update case calls nextStage() (L393-395) instead of going to the title, so the game never returns to the title (hits2/title path at L820-821 is pre-empted). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "B6": {
+   "score": 1,
+   "evidence": "Loaded at L156 (works at load), saved in addScore L176, which never runs. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "C1": {
+   "score": 1,
+   "evidence": "Arrows/A/D move horizontally only (L440-443), Space fires (L444), Enter starts (L384), P pauses (L378). None work: key handling lives in update(), which crashes. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "C2": {
+   "score": 1,
+   "evidence": "Cap of 2 at L270, but the dual fighter pushes 2 shots when 1 is already on screen (L272), giving 3. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "C3": {
+   "score": 1,
+   "evidence": "lives=2 reserve (L359), extra at 20,000 then +70,000 (L157, L175). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "C4": {
+   "score": 1,
+   "evidence": "Shots fired / hits / ratio % screen (L815-818) after GAME OVER (L397). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Distinct Zako/Goei/Boss pixel sprites with 2 frames each (L121-128, L139-147), anim toggled L475. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D2": {
+   "score": 1,
+   "evidence": "50/100, 80/160, boss 150/400/800/1600 (L306-314), but the boss also scores pointsFor on its first non-lethal hit (L458-459), so it scores twice; escort count uses a stale boss.escorts list (L312). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D3": {
+   "score": 1,
+   "evidence": "hp 2 (L202), sprite green->purple by hp (L720), sBossHit on first hit (L457). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D4": {
+   "score": 1,
+   "evidence": "4 boss in row 0, 16 goei in rows 1-2, 20 zako in rows 3-4 (L188-190). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D5": {
+   "score": 1,
+   "evidence": "5 groups of 8 with staggered delays (L192-207) flying cubic Bezier entry paths to their slot (L210-220, L482-488), firing while entering (L486). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D6": {
+   "score": 1,
+   "evidence": "Sway while filling, breathing after (L411-414, slotPos L181-183); formationDone never becomes true if an entering enemy is shot, since entryLeft only decrements on arrival (L487). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D7": {
+   "score": 1,
+   "evidence": "Bezier dives toward the player (L232-242), firing (L497), off-bottom -> 'return' from the top to the slot (L504, L533-538). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D8": {
+   "score": 1,
+   "evidence": "Boss with two Goei escorts (L243-249, L507-512); dive timer and speed scale with stage (L186, L240, L580). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "D9": {
+   "score": 1,
+   "evidence": "Bullet hit kills player (L554-573); ramming kills player and enemy (L541-549) (rammed enemy gives no score). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E1": {
+   "score": 1,
+   "evidence": "Beam dive stops at y=112 (L250-255, L503); cone widens and extends with animated colour bands over 45 frames (L730-742); beam sound (L77-86). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E2": {
+   "score": 1,
+   "evidence": "Player pulled to boss (L431-436), drawn red (L754-757), boss.captive held above it (L290-294, L723-728), ship lost / game over if last (L296-299). Captive x/y only updated while diving (L499), so after one dive it is drawn at a stale spot. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E3": {
+   "score": 1,
+   "evidence": "First hit on a diving/beaming boss with a captive frees it (L460, L300-303); dockShip falls and docks (L633-642). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E4": {
+   "score": 1,
+   "evidence": "Dual draws two ships moving together (L747-749), fires two shots (L272), a bullet removes one half (L564-567); ramming still kills both (L545). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E5": {
+   "score": 1,
+   "evidence": "Killing a boss in formation with a captive explodes the captive (L320-322). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "E6": {
+   "score": 1,
+   "evidence": "Captive fires randomly while its boss dives (L498-501). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "F1": {
+   "score": 0,
+   "evidence": "Stage-clear test 'enemies.length&&enemies.every(dead)' (L423) can never pass: dead enemies are removed every frame at L551, so enemies becomes [] and enemies.length is 0. Stage never advances (on top of the load crash)."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "Challenge enemies are created with state 'path' and no segs (L341-342); updateChallenge reads e.segs[e.seg] (L593) -> TypeError on the first frame. 'waitPath' is never assigned, so challengePath (L346) is never called. Dead enemies are never removed (L600 only drops 'gone'), so a wave with any kill never resolves (L603-609). challenge is never reset to null, so stages after 3 would run updateChallenge forever (L408). Unreachable anyway because F1 never advances."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "100/hit, 1,000/wave, 10,000 perfect and 'NUMBER OF HITS' screen are written (L607, L611, L624, L804-811) but cannot run: stage 3 is unreachable (F1) and the challenge update crashes at L593."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "Badges decomposed into 50/30/20/10/5/1 (L691-701), drawn as plain red rectangles; stage 1 badge drawn twice (L702-705). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "G1": {
+   "score": 1,
+   "evidence": "Shot, enemy destroyed, boss hit, player explosion, capture + looping beam, jingle (L69-95); 'enemy hit' and 'destroyed' share one sound. Merit 2 (all but one). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "G2": {
+   "score": 1,
+   "evidence": "initAudio on keydown resumes the context (L33-34, L43-50), which does run; M mute is in update() (L377), which crashes. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "H1": {
+   "score": 1,
+   "evidence": "Player boxes 10x12 (L265-268) vs 16-wide sprite; shot boxes +-7/+-6 vs 16x10-12 sprites (L454) - fair. Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "H2": {
+   "score": 1,
+   "evidence": "3-frame explosion sprites for enemies and the player (L135-137, L769-774). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  },
+  "H3": {
+   "score": 1,
+   "evidence": "Death delay 90 frames then READY 90 frames (L277, L279-283, L675); dive scheduler blocked while readyT>0 or player not playing (L577). Capped at 1: update() throws 'Assignment to constant variable' on the first tick (pressed is const, L32; reassigned L403), so the game loop dies and this never runs."
+  }
+ },
+ "total": 36,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "32, 379, 403",
+   "text": "'pressed' is declared const and reassigned with 'pressed={}' in update(): TypeError 'Assignment to constant variable' on the first tick kills the requestAnimationFrame loop; the game is frozen on the title screen and can never start (confirmed by result.json and all screenshots)."
+  },
+  {
+   "severity": "severe",
+   "lines": "423, 551",
+   "text": "Stage clear can never trigger: dead enemies are filtered out at L551, so 'enemies.length&&every(dead)' is always false once all are dead; the stage never advances."
+  },
+  {
+   "severity": "severe",
+   "lines": "341-342, 591-597",
+   "text": "Challenging-stage enemies start in state 'path' with no segs, so e.segs[e.seg] throws a TypeError on the first challenge frame; 'waitPath' is never set."
+  },
+  {
+   "severity": "severe",
+   "lines": "600-609",
+   "text": "Challenge waves never resolve once any enemy is shot, because dead enemies are never removed from the array."
+  },
+  {
+   "severity": "severe",
+   "lines": "185, 330, 408",
+   "text": "'challenge' is never reset to null, so every stage after a challenging stage runs updateChallenge and normal enemies (state 'wait') never move: soft-lock."
+  },
+  {
+   "severity": "severe",
+   "lines": "393-397, 819-821",
+   "text": "After GAME OVER the 'hits' update case calls nextStage() instead of returning to the title; with 0 lives the player dies again into another game over, looping forever."
+  },
+  {
+   "severity": "minor",
+   "lines": "789-797",
+   "text": "Title score table prints '100 POINTS' for all three enemies (uses r[1] instead of r[2])."
+  },
+  {
+   "severity": "minor",
+   "lines": "456-459",
+   "text": "Boss scores pointsFor on its first non-lethal hit as well as on its kill."
+  },
+  {
+   "severity": "minor",
+   "lines": "270-273",
+   "text": "Dual fighter can have 3 shots on screen; a dual volley counts as one shot fired."
+  },
+  {
+   "severity": "minor",
+   "lines": "487, 411-414",
+   "text": "Shooting an enemy during entry leaves entryLeft > 0 forever, so the formation never switches from sway to breathing."
+  },
+  {
+   "severity": "minor",
+   "lines": "498-499, 725-727",
+   "text": "Captive fighter position only tracked while its boss dives, so afterwards it is drawn at a stale position away from the boss."
+  },
+  {
+   "severity": "minor",
+   "lines": "702-705",
+   "text": "Stage 1 badge drawn twice at the same spot; badges are plain rectangles."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "The code is a compact, reasonably organised Galaga attempt that on paper covers most of the arcade's features: Bezier entry waves into a 4/16/20 formation with sway and breathing, curved dives with re-entry, escorted Boss dives, an animated tractor beam with capture, rescue and a dual fighter, synthesized sounds and a correct fixed-timestep loop. But it never runs: 'pressed' is const and update() reassigns it, so the very first tick throws and the rAF loop dies, leaving a frozen title screen whose score table even shows 100 points for every enemy. Behind that crash are more game-breaking faults: a stage can never be cleared because dead enemies are filtered out before the clear check, the challenging stage crashes on undefined path segments and is never reset, and game over loops into the next stage instead of the title. Rendering also mutates game state in places. As delivered it is not playable and gives no Galaga experience at all."
+}

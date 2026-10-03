@@ -1,0 +1,6 @@
+# the Anthropic SDK venv for gen_claude.py (recreate: python -m venv apivenv && apivenv/Scripts/pip install anthropic)
+apivenv/
+__pycache__/
+# review/<letter>/ holds blind copies of out/ and play/ (blind.py recreates them); only the reviewers' scores are kept
+review/*/*
+!review/*/scores.json

@@ -1,0 +1,177 @@
+{
+ "letter": "A",
+ "items": {
+  "A1": {
+   "score": 0,
+   "evidence": "File is truncated at line 466 mid-token inside the EXPLOSION data (lines 118-466 are a degenerate repeat of identical all-'1' 11x11 frames); no closing </script>, </body> or </html>. No game state, update, render, input or loop code exists. No external resources, but the file is not complete."
+  },
+  "A2": {
+   "score": 0,
+   "evidence": "The <script> (lines 16-466) does not parse: node --check reports SyntaxError 'Invalid or unexpected token' at line 466. result.json says loads_clean true / errors [], but canvas=false, title_drawn=false, starts=false, moves=false, and every screenshot (1-title through 5-end) shows only an empty default 300x150 canvas with its CSS glow: nothing ever runs."
+  },
+  "A3": {
+   "score": 0,
+   "evidence": "No game loop and no requestAnimationFrame call anywhere in the file (grep finds none); file ends at line 466 in sprite data."
+  },
+  "A4": {
+   "score": 0,
+   "evidence": "Only helpers exist (palette 36-40, math 43-47, audio 50-77, sprite helpers 80-83, sprite data 86-115); no game state, update or render code was ever written. The 345-line copy-pasted explosion block (120-466) is degenerate output."
+  },
+  "B1": {
+   "score": 0,
+   "evidence": "CSS centres the canvas on black with pixelated rendering (lines 8-11) and lines 24-33 would size it to integer multiples of 224x288, but the script never executes (SyntaxError), so the canvas stays at the default 300x150 (landscape) in every screenshot."
+  },
+  "B2": {
+   "score": 0,
+   "evidence": "No starfield code exists."
+  },
+  "B3": {
+   "score": 0,
+   "evidence": "No HUD code exists (no 1UP, HIGH SCORE, reserve ships or badge drawing). Flag sprites are defined (103-114) but never used."
+  },
+  "B4": {
+   "score": 0,
+   "evidence": "No title screen code; screenshot 1-title.png is a blank black canvas."
+  },
+  "B5": {
+   "score": 0,
+   "evidence": "No STAGE N, GAME OVER or state-machine code exists."
+  },
+  "B6": {
+   "score": 0,
+   "evidence": "No localStorage use anywhere in the file."
+  },
+  "C1": {
+   "score": 0,
+   "evidence": "No keyboard handlers exist; harness: starts=false, moves=false."
+  },
+  "C2": {
+   "score": 0,
+   "evidence": "No player shots exist."
+  },
+  "C3": {
+   "score": 0,
+   "evidence": "No lives or extra-ship logic exists."
+  },
+  "C4": {
+   "score": 0,
+   "evidence": "No results screen exists."
+  },
+  "D1": {
+   "score": 0,
+   "evidence": "Distinct 2-frame sprites are defined (bossG/bossB 91-94, goei1/goei2 95-98, zako1/zako2 99-102) but nothing ever draws them and the script never runs."
+  },
+  "D2": {
+   "score": 0,
+   "evidence": "No scoring code exists."
+  },
+  "D3": {
+   "score": 0,
+   "evidence": "Only a blue boss sprite exists (93-94); no hit-count logic."
+  },
+  "D4": {
+   "score": 0,
+   "evidence": "No formation layout code exists."
+  },
+  "D5": {
+   "score": 0,
+   "evidence": "catmull() helper (46-47) exists but no entry paths or enemies are ever created."
+  },
+  "D6": {
+   "score": 0,
+   "evidence": "No formation sway/breathing code exists."
+  },
+  "D7": {
+   "score": 0,
+   "evidence": "No dive or enemy-fire code exists."
+  },
+  "D8": {
+   "score": 0,
+   "evidence": "No dive/escort or stage-difficulty code exists."
+  },
+  "D9": {
+   "score": 0,
+   "evidence": "No collision code exists."
+  },
+  "E1": {
+   "score": 0,
+   "evidence": "Only a 'beam' sound (line 69) exists; no tractor-beam logic or drawing, and the sound is never called."
+  },
+  "E2": {
+   "score": 0,
+   "evidence": "A red 'captured' sprite is defined (89-90) but no capture logic exists."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "Only 'free'/'dock' sounds (73-74), never called; no rescue logic."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "No dual fighter code exists."
+  },
+  "E5": {
+   "score": 0,
+   "evidence": "No code exists."
+  },
+  "E6": {
+   "score": 0,
+   "evidence": "No code exists."
+  },
+  "F1": {
+   "score": 0,
+   "evidence": "No stage progression code exists."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "Only a 'chall' jingle (75), never called; no challenging-stage code."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "Only a 'perfect' jingle (76), never called; no scoring or NUMBER OF HITS display."
+  },
+  "F4": {
+   "score": 0,
+   "evidence": "Badge sprites for 1/5/10/20/30/50 are defined (103-114) but never drawn and the script never runs."
+  },
+  "G1": {
+   "score": 0,
+   "evidence": "sfx() (63-77) defines shoot, ehit, edie, boss, boom, beam and start sounds, but sfx() is never called anywhere and the script fails to parse, so no sound can ever play."
+  },
+  "G2": {
+   "score": 0,
+   "evidence": "ensureAudio() (51-52) and a 'muted' flag (50) exist but no key handler calls ensureAudio or toggles muted."
+  },
+  "H1": {
+   "score": 0,
+   "evidence": "No collision/hitbox code exists."
+  },
+  "H2": {
+   "score": 0,
+   "evidence": "EXPLOSION frame data (118-466) is degenerate (frames 3+ are all identical solid squares) and truncated; no explosion objects or drawing code exist."
+  },
+  "H3": {
+   "score": 0,
+   "evidence": "No respawn or READY code exists."
+  }
+ },
+ "total": 0,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "118-466",
+   "text": "The file is truncated at line 466 (mid-string inside the EXPLOSION array, lines 118-466, which degenerates into ~345 identical all-'1' frames). There is no </script>, the script is a SyntaxError (node --check: 'Invalid or unexpected token' at file line 466), so no JavaScript runs. The game never shows anything but an empty 300x150 black canvas."
+  },
+  {
+   "severity": "severe",
+   "lines": "16-466",
+   "text": "Almost the whole game is missing: no input handling, game state, enemies, player, update logic, rendering, HUD or game loop was ever written; output degenerated into repeating explosion-frame rows."
+  },
+  {
+   "severity": "minor",
+   "lines": "1-466",
+   "text": "The play-test reported loads_clean=true with no errors even though the inline script cannot parse; the harness evidently did not capture the SyntaxError, but canvas/title/start/move checks are all false and all screenshots are blank."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "Submission A is not a game. The model wrote a reasonable preamble (integer-scaled 224x288 canvas setup, a palette, catmull-rom helper, a Web Audio sfx() table covering every required sound, and small 2-frame pixel sprites for the fighter, captured fighter, Boss in green/blue, Goei, Zako and the six badge denominations), then fell into a repetition loop while writing the EXPLOSION frame data and emitted ~345 identical 11x11 all-'1' frames until output was cut off mid-string at line 466. There is no closing </script>, so the script is a syntax error and none of it runs; there is also no state, input, update, render or loop code at all. Every screenshot shows only the default 300x150 empty canvas. Nothing of Galaga's gameplay exists, so every rubric item scores 0."
+}

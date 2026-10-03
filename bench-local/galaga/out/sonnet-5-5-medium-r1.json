@@ -1,0 +1,38 @@
+{
+ "quant": "claude-sonnet-5-5",
+ "arm": "medium",
+ "seed": 1,
+ "request": {
+  "model": "claude-sonnet-5-5",
+  "max_tokens": 49152,
+  "thinking": {
+   "type": "adaptive"
+  },
+  "output_config": {
+   "effort": "medium"
+  }
+ },
+ "wall_s": 403.8,
+ "finish_reason": "length",
+ "usage": {
+  "prompt_tokens": 2057,
+  "completion_tokens": 49152
+ },
+ "metrics": {
+  "duration_s": 403.8
+ },
+ "request_id": "req_011CfeUPbHHgXeHGR23CoX4n",
+ "blocks": [
+  {
+   "type": "thinking",
+   "chars": 0
+  }
+ ],
+ "stop_reason": "max_tokens",
+ "stop_details": null,
+ "html_extract": "raw",
+ "html_chars": 0,
+ "html_lines": 1,
+ "thinking_chars": 0,
+ "content": ""
+}

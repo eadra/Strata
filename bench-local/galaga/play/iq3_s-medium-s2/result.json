@@ -1,0 +1,19 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": false,
+ "survives_play": true,
+ "alive_at_end": false,
+ "passed": 6,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 4.1,
+   "text": "Cannot read properties of undefined (reading 'width')"
+  }
+ ],
+ "n_errors": 1
+}

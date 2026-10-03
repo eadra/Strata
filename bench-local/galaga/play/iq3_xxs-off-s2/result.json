@@ -1,0 +1,114 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": false,
+ "survives_play": false,
+ "alive_at_end": false,
+ "passed": 5,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.0,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.1,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.1,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.1,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.1,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.1,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.2,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.3,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.3,
+   "text": "Cannot read properties of null (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.3,
+   "text": "Cannot read properties of null (reading '0')"
+  }
+ ],
+ "n_errors": 5611
+}

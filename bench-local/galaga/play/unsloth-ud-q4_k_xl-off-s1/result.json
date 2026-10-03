@@ -1,0 +1,13 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": true,
+ "survives_play": true,
+ "alive_at_end": false,
+ "passed": 7,
+ "errors": [],
+ "n_errors": 0
+}

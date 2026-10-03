@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Galaga</title>
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  body{display:flex;align-items:center;justify-content:center}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;display:block}
+</style>
+</head>
+<body>
+<canvas id="c" width="224" height="288"></canvas>
+<script>
+"use strict";
+/* ======================================================================
+   GALAGA clone - single file. Sections:
+   1. constants & helpers   2. bitmap font   3. sprites   4. audio
+   5. game state            6. paths         7. update logic
+   8. rendering             9. input & main loop
+   ====================================================================== */
+
+// ---------- 1. constants & helpers ----------
+const W = 224, H = 288, PY = 248;          // playfield size, player Y
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const rnd = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+function resize() {
+  let s = Math.min(innerWidth / W, innerHeight / H);
+  if (s >= 1) s = Math.floor(s);
+  cv.style.width = Math.floor(W * s) + 'px';
+  cv.style.height = Math.floor(H * s) + 'px';
+}
+addEventListener('resize', resize); resize();
+
+// ---------- 2. bitmap font (5x7, rows packed as base-32 digits) ----------
+const FONTSRC = {
+  A:'ehhvhhh',B:'uhhuhhu',C:'ehggghe',D:'uhhhhhu',E:'vgguggv',F:'vgguggg',G:'ehgnhhf',H:'hhhvhhh',
+  I:'e44444e',J:'72222ic',K:'hikokih',L:'ggggggv',M:'hrllhhh',N:'hhpljhh',O:'ehhhhhe',P:'uhhuggg',
+  Q:'ehhhlid',R:'uhhukih',S:'fgge11u',T:'v444444',U:'hhhhhhe',V:'hhhhha4',W:'hhhllrh',X:'hha4ahh',
+  Y:'hha4444',Z:'v1248gv','0':'ehjlphe','1':'4c4444e','2':'eh1248v','3':'u11e11u','4':'26aiv22',
+  '5':'vgu11he','6':'68guhhe','7':'v124888','8':'ehhehhe','9':'ehhf12c','-':'000v000','!':'4444404',
+  '.':'00000cc',':':'0cc0cc0','%':'op248j3','/':'122488g','+':'0044v44'
+};
+const FONT = {};
+for (const k in FONTSRC) FONT[k] = FONTSRC[k].split('').map(c => parseInt(c, 32));
+function text(s, x, y, col, sc, align) {
+  s = String(s).toUpperCase(); sc = sc || 1; const adv = 7 * sc;
+  const w = s.length * adv - sc;
+  if (align === 'c') x -= w / 2; else if (align === 'r') x -= w;
+  ctx.fillStyle = col;
+  for (let i = 0; i < s.length; i++) {
+    const g = FONT[s[i]]; if (!g) continue;
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++)
+      if (g[r] & (16 >> c)) ctx.fillRect(Math.round(x + i * adv + c * sc), Math.round(y + r * sc), sc, sc);
+  }
+}
+
+// ---------- 3. sprites (left halves, mirrored) ----------
+function build(half, pal) {
+  const c = document.createElement('canvas'); c.width = c.height = 16;
+  const x = c.getContext('2d');
+  for (let r = 0; r < 16; r++) for (let k = 0; k < 8; k++) {
+    const col = pal[half[r][k]]; if (!col) continue;
+    x.fillStyle = col; x.fillRect(k, r, 1, 1); x.fillRect(15 - k, r, 1, 1);
+  }
+  return c;
+}
+const ZA = ["........","......yy","w....yyb","wb..bbbr","wbb.bbbb","wbbbbwbb",".bbbbbbb","..bbbbyb","..bbbbbb","..bbbyyb","...bbbbb","....bbrb","....rbbb","....r.bb",".....y..","........"];
+const ZB = ["........","......yy",".....yyb","....bbbr","...bbbbb","..bbwbbb",".bbbbbbb","wbbbbbyb","wbb.bbbb","wb..byyb","w...bbbb","....bbrb","....rbbb","....r.bb",".....y..","........"];
+const GA = ["........","w.....rr","wr...rrb","wrr.rrbr","wrrrrrrr","rrwrbrby","rrrrrrrr",".rrbrrrb","..rrrbrr","..rrrrrr","...rrbrr","...rrrrr","....rr.r",".....r.r","........","........"];
+const GB = ["........","......rr",".....rrb","....rrbr","...rrrrr","w.rrbrby","wrrrrrrr","wrrbrrrb","wrrrrbrr",".rrrrrrr","..rrbrrr","...rrrrr","....rr.r",".....r.r","........","........"];
+const BA = ["y.y..aaa","yyy.aaad","w.y.aaaa","wa.aaaaa","waaaadaa","waaaaaaa",".aaaadaa","..aaaaad","..aaaaaa","...aadaa","...aaaaa","....aaya","....a.aa",".....a.a","........","........"];
+const BB = ["y.y..aaa","yyy.aaad","..y.aaaa","...aaaaa","..aaadaa","waaaaaaa","waaaaaad",".waaaaaa","..aaaadd","..aaaaaa","...aadaa","...aaaaa","....aaya","....a.aa",".....a.a","........"];
+const PA = [".......w",".......w",".......w","......ww","w.....ww","w.....ww","wr...www","wr..wwcw","wrw.wwwc","wwwwwwwc","wwwwwrww","wwwwwwww","wwcwwwww","ww.wwrww","w..ww..w","w....w.."];
+const pZ = {y:'#ff2',b:'#38f',r:'#f33',w:'#fff'}, pG = {r:'#f22',b:'#38f',w:'#fff',y:'#ff2'};
+const pB = {a:'#2c4',d:'#a4f',y:'#ff2',w:'#fff',r:'#f33'}, pBH = {a:'#55f',d:'#f6f',y:'#ff2',w:'#fff',r:'#f33'};
+const SPR = {
+  zako: [build(ZA, pZ), build(ZB, pZ)], goei: [build(GA, pG), build(GB, pG)],
+  boss: [build(BA, pB), build(BB, pB)], bossHit: [build(BA, pBH), build(BB, pBH)],
+  ship: build(PA, {w:'#eee', r:'#f22', c:'#4cf'}),
+  shipRed: build(PA, {w:'#f55', r:'#fbb', c:'#f22'})
+};
+
+// ---------- 4. audio ----------
+let AC = null, muted = false;
+function initAudio() {
+  if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { AC = null; } }
+  if (AC && AC.state === 'suspended') AC.resume();
+}
+function tone(f0, f1, dur, type, vol, delay) {
+  if (!AC || muted) return;
+  const t = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t + dur);
+  g.gain.setValueAtTime(vol || 0.1, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + dur + 0.03);
+}
+function noise(dur, vol, f0, f1, delay) {
+  if (!AC || muted) return;
+  const t = AC.currentTime + (delay || 0), n = Math.floor(AC.sampleRate * dur);
+  const b = AC.createBuffer(1, n, AC.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+  const s = AC.createBufferSource(); s.buffer = b;
+  const f = AC.createBiquadFilter(); f.type = 'lowpass';
+  f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  const g = AC.createGain(); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f); f.connect(g); g.connect(AC.destination); s.start(t);
+}
+const sfx = {
+  shot() { tone(1500, 300, 0.09, 'square', 0.06); },
+  kill() { noise(0.22, 0.22, 3500, 300); tone(600, 90, 0.18, 'sawtooth', 0.06); },
+  bossHit() { tone(240, 120, 0.14, 'square', 0.12); tone(480, 200, 0.1, 'sawtooth', 0.07); noise(0.08, 0.15, 2000, 500); },
+  playerBoom() { noise(0.9, 0.35, 2500, 80); tone(160, 30, 0.8, 'sawtooth', 0.14); },
+  beam(k) { tone(k % 2 ? 520 : 430, k % 2 ? 330 : 260, 0.12, 'sawtooth', 0.05); },
+  capture() { tone(200, 1400, 0.6, 'sine', 0.12); },
+  dive() { tone(900, 250, 0.2, 'triangle', 0.05); },
+  dock() { tone(500, 1400, 0.25, 'square', 0.08); tone(800, 1800, 0.25, 'square', 0.06, 0.12); },
+  extra() { [660, 880, 1100, 1320].forEach((f, i) => tone(f, f, 0.1, 'square', 0.07, i * 0.09)); },
+  jingle() { [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => tone(f, f, 0.13, 'square', 0.06, i * 0.1)); }
+};
+
+// ---------- 5. game state ----------
+const keys = {l: false, r: false};
+let fireReq = false, paused = false, tick = 0;
+let mode = 'title', modeT = 0;
+let hi = 0; try { hi = +localStorage.getItem('galagaHi') || 0; } catch (e) {}
+let S = {score: 0, stage: 1, reserve: 2, nextExtra: 20000, shots: 0, hits: 0, challenge: false,
+         chHits: 0, waveKills: [0, 0, 0, 0, 0], volId: 0, cap: null, chBonus: 0, chPerfect: false};
+const P = {x: 112, state: 'play', dual: false, deadT: 0, readyT: 0, inv: 0};   // play|ready|dead|captured
+const F = {t: 0, swayAmp: 12, breathAmp: 0, filled: false, diveT: 60};         // formation
+let enemies = [], pShots = [], eBullets = [], booms = [], popups = [], rescues = [];
+
+// starfield: three speed layers, random colours, twinkling
+const stars = [];
+for (let i = 0; i < 90; i++) {
+  const layer = i % 3;
+  stars.push({x: rnd(0, W), y: rnd(0, H), sp: 0.3 + layer * 0.45, ph: Math.floor(rnd(0, 60)),
+              col: ['#fff', '#6cf', '#f66', '#6f8', '#fd4', '#c8f'][Math.floor(rnd(0, 6))]});
+}
+
+function setMode(m) { mode = m; modeT = 0; }
+function addScore(n) {
+  S.score += n;
+  while (S.score >= S.nextExtra) { S.reserve++; sfx.extra(); S.nextExtra = S.nextExtra === 20000 ? 90000 : S.nextExtra + 70000; }
+  if (S.score > hi) hi = S.score;
+}
+function popup(x, y, s) { popups.push({x, y, s, t: 0}); }
+
+function startGame() {
+  S = {score: 0, stage: 1, reserve: 2, nextExtra: 20000, shots: 0, hits: 0, challenge: false,
+       chHits: 0, waveKills: [0, 0, 0, 0, 0], volId: 0, cap: null, chBonus: 0, chPerfect: false};
+  P.x = 112; P.state = 'play'; P.dual = false; P.inv = 0;
+  rescues = []; startIntro();
+}
+function startIntro() {
+  S.challenge = S.stage % 4 === 3;
+  enemies = []; pShots = []; eBullets = []; popups = [];
+  F.t = 0; F.swayAmp = 12; F.breathAmp = 0; F.filled = false; F.diveT = 60;
+  setMode('intro');
+}
+function gameOver() {
+  if (S.score > hi) hi = S.score;
+  try { localStorage.setItem('galagaHi', hi); } catch (e) {}
+  setMode('gameover');
+}
+
+// ---------- 6. paths ----------
+// Catmull-Rom spline through points, resampled at 1px spacing -> constant speed.
+function makePath(pts) {
+  const dense = [], n = pts.length;
+  for (let i = 0; i < n - 1; i++) {
+    const p0 = pts[Math.max(i - 1, 0)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(i + 2, n - 1)];
+    for (let s = 0; s < 16; s++) {
+      const t = s / 16, t2 = t * t, t3 = t2 * t, q = [0, 0];
+      for (let a = 0; a < 2; a++)
+        q[a] = 0.5 * (2 * p1[a] + (-p0[a] + p2[a]) * t + (2 * p0[a] - 5 * p1[a] + 4 * p2[a] - p3[a]) * t2 + (-p0[a] + 3 * p1[a] - 3 * p2[a] + p3[a]) * t3);
+      dense.push(q);
+    }
+  }
+  dense.push(pts[n - 1].slice());
+  const out = [dense[0].slice()]; let cur = dense[0].slice(), k = 1, rem = 1;
+  while (k < dense.length) {
+    const nx = dense[k], dx = nx[0] - cur[0], dy = nx[1] - cur[1], dl = Math.hypot(dx, dy);
+    if (dl >= rem) { cur = [cur[0] + dx / dl * rem, cur[1] + dy / dl * rem]; out.push(cur); rem = 1; }
+    else { rem -= dl; cur = nx.slice(); k++; }
+  }
+  out.push(cur.slice());
+  return out;
+}
+// Move enemy along its path; returns true when the end is reached.
+function advance(e, spd) {
+  e.d += spd; const p = e.path, L = p.length - 1;
+  const done = e.d >= L - 1, d = Math.min(e.d, L - 1.001), i = d | 0, f = d - i;
+  e.x = p[i][0] + (p[i + 1][0] - p[i][0]) * f; e.y = p[i][1] + (p[i + 1][1] - p[i][1]) * f;
+  const q = p[Math.min(i + 3, L)], dx = q[0] - p[i][0], dy = q[1] - p[i][1];
+  if (Math.hypot(dx, dy) > 0.01) e.ang = Math.atan2(dy, dx) - Math.PI / 2;
+  return done;
+}
+// entry templates (formation stages) and looping templates (challenging stage)
+const T1 = [[120,-16],[120,40],[124,100],[140,160],[150,200],[130,225],[100,215],[95,185],[120,165],[150,140]];
+const T2 = [[-16,150],[30,170],[80,175],[115,150],[110,115],[80,105],[65,125],[85,145]];
+const T3 = [[60,-16],[60,60],[50,130],[40,190],[60,230],[100,235],[125,215],[120,185]];
+const C1 = [[-16,70],[50,70],[110,90],[140,130],[120,165],[85,150],[90,115],[130,110],[180,140],[215,200],[220,260],[200,320]];
+const C2 = [[90,-16],[90,60],[70,110],[40,140],[40,180],[70,200],[95,180],[75,155],[110,140],[160,160],[190,210],[190,320]];
+const C3 = [[200,-16],[190,60],[150,110],[100,130],[60,110],[70,75],[110,80],[125,115],[100,160],[70,210],[85,260],[100,320]];
+
+// formation slot position (with sway while filling and breathing afterwards)
+function slotPos(e) {
+  const s = 1 + F.breathAmp * (1 - Math.cos(F.t * 0.035)) / 2, sy = 1 + (s - 1) * 0.7;
+  return {x: 112 + (e.col - 4.5) * 16 * s + Math.sin(F.t * 0.02) * F.swayAmp, y: 46 + e.row * 16 * sy};
+}
+function mk(type

@@ -1,0 +1,19 @@
+{
+ "loads_clean": false,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": false,
+ "starts": false,
+ "moves": false,
+ "survives_play": true,
+ "alive_at_end": false,
+ "passed": 3,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Assignment to constant variable."
+  }
+ ],
+ "n_errors": 1
+}

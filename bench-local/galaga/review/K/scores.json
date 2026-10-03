@@ -1,0 +1,222 @@
+{
+ "letter": "K",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single self-contained file (1-514), all sprites from string data (97-127), audio synthesized (53-85), no external resources, no placeholders."
+  },
+  "A2": {
+   "score": 2,
+   "evidence": "result.json: loads_clean true, survives_play true, 0 errors. (The game soft-locks without throwing; that is scored under the gameplay items.)"
+  },
+  "A3": {
+   "score": 2,
+   "evidence": "Accumulator loop on requestAnimationFrame with STEP=1000/60 and dt clamp 250 ms (25, 508-510)."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "update()/render() and per-system functions are separated with section comments, but code is crammed into dense one-liners and important pieces are left unwired: game.entry.spawnTimer/groups never consumed for normal stages, stageClearTimer never decremented, game.beams unused, sfxEnemyHit never called (141,166,190,429,75)."
+  },
+  "B1": {
+   "score": 2,
+   "evidence": "Canvas 224x288 (24,48), integer scale factor (49-50), image-rendering:pixelated, flex-centred on black (8-10)."
+  },
+  "B2": {
+   "score": 2,
+   "evidence": "90 stars in 5 colours scrolling at varied speeds with sin-based twinkle alpha (130-135); visible in all screenshots."
+  },
+  "B3": {
+   "score": 1,
+   "evidence": "1UP and HIGH SCORE drawn (456-457); reserve ships bottom-left but drawn for game.lives=3, i.e. 3 reserve icons with the ship in play (458, 382, screenshot 3); stage badge is a single green box with black dots, not flags (459-461)."
+  },
+  "B4": {
+   "score": 1,
+   "evidence": "Title with score table and blinking PRESS ENTER TO START (464-473), but the Boss row says '200000 PTS' (467) instead of 150; no diving values."
+  },
+  "B5": {
+   "score": 1,
+   "evidence": "STAGE N shown via stageintro (379-389, 474); GAME OVER and return to title coded (391, 481) but unreachable since the player can never die; flow soft-locks on 'STAGE 1 CLEAR!' forever (424, 429; screenshots 3 and 5)."
+  },
+  "B6": {
+   "score": 2,
+   "evidence": "loadHigh/saveHigh with localStorage key galaga_high in try/catch (147-149, 208)."
+  },
+  "C1": {
+   "score": 2,
+   "evidence": "Arrows and A/D horizontal movement (396-397), Space fires (397), Enter starts (388), P toggles pause (503, 392), M mutes (502). Pause during stage intro does not halt the intro timer (389 runs before 392) - minor."
+  },
+  "C2": {
+   "score": 2,
+   "evidence": "firePlayer refuses when pShots.length>=PLAYER_MAX=2 (30,196)."
+  },
+  "C3": {
+   "score": 0,
+   "evidence": "lives=3 and extra-ship logic at 20000/+70000 exist (382, 209), but no scoring or death can ever occur (unreachable: no enemy ever appears, see severe bugs); HUD shows 3 reserve ships while one is in play (458)."
+  },
+  "C4": {
+   "score": 0,
+   "evidence": "Results screen with shots fired, hits, ratio % coded (481-485) but game over can never be reached (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Distinct zako/goei/boss sprites (106-117) shown on the title screen; the '2-frame' animation is only a horizontal mirror of the same sprite (123-126), and in-game enemy drawing never runs (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D2": {
+   "score": 0,
+   "evidence": "Zako 50 / Goei 80 formation values only (207); no diving 100/160; destroyEnemy gives bosses 400/800/1600 even in formation, never 150 (323). All unreachable (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D3": {
+   "score": 0,
+   "evidence": "hp=2 and bossHit sprite swap exist (154, 329, 436) but bosses never spawn (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D4": {
+   "score": 0,
+   "evidence": "buildFormation (158-166) is never called for stage 1 (startGame 382-384 sets enemies=[]); even when called it builds 10 columns per row = 10 bosses, 20 goei, 20 zako = 50 (26, 159-163), not 4/16/20."
+  },
+  "D5": {
+   "score": 0,
+   "evidence": "setupEntryGroups/makeEntry exist (171-190) but spawnGroup is only called from updateChallenge (366); normal-stage enemies would stay 'pending' forever (411), and stage 1 has no enemies at all (383)."
+  },
+  "D6": {
+   "score": 0,
+   "evidence": "updateFormationSway (426-428) never sets formation.done=true, so breathing never happens; sway uses offsetX=dir*speed*game.time which clamps and jitters at +-8; and no enemy ever sits in formation (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D7": {
+   "score": 0,
+   "evidence": "Dive path is a piecewise-linear polyline (248-256, 268-271); offscreen/return logic exists (283-284, 231-233), but tryDive needs enemies in 'formation' which never exist (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D8": {
+   "score": 0,
+   "evidence": "Escort assignment exists (257-260, 266-267) and dive chance scales with stage (242) but can never trigger (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "D9": {
+   "score": 0,
+   "evidence": "Bullet and body collision coded (339-347) but bosses are excluded from body collision (343); no enemies or enemy bullets ever exist (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "E1": {
+   "score": 0,
+   "evidence": "tryCapture/beam cone drawing (287-299, 439-444) only for diving bosses, which never exist (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "E2": {
+   "score": 0,
+   "evidence": "Capture coded (295-297) but unreachable (unreachable: no enemy ever appears, see severe bugs); the captured fighter is not pulled up, it simply appears above the boss."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "freeCaptured (300-301) is only called when boss hp<=0 (334), but destroyEnemy has already made the captive hostile and cleared e.captured (327-328), so freeCaptured finds nothing - rescue can never happen even in principle; also unreachable (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "Dual drawing, two shots and half-loss coded (195-201, 317, 451-452) but can never be entered (see E3)."
+  },
+  "E5": {
+   "score": 0,
+   "evidence": "Captive turned hostile on boss death (327) but unreachable (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "E6": {
+   "score": 0,
+   "evidence": "Captive fires during boss dive (276-277) but unreachable (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "F1": {
+   "score": 0,
+   "evidence": "Clearing sets mode 'stageclear' (424, 429) but nothing ever leaves that mode: update has no stageclear branch and startStage is only called from challengeSummary (390). Soft-lock on 'STAGE 1 CLEAR!' (screenshots 3-5)."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "Challenge code (351-375) is unreachable (stage never advances); spawnChallengeWave creates enemies that are never pushed into game.enemies (353) and spawnGroup always uses groups[0] with kind 'challenge' which makeEntry does not handle (176); makeChallengePath is never used (356)."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "100 per hit, 1000 per wave, 10000 perfect and NUMBER OF HITS screen coded (368-374, 476-479) but unreachable (F1, F2)."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "badgeCount counts tiers [1,5,10,20,30,50] (461) but they are drawn as dots inside one green box (459-460), not distinct flag badges; stage never exceeds 1 anyway."
+  },
+  "G1": {
+   "score": 0,
+   "evidence": "Sounds defined for all seven (74-83), but sfxEnemyHit is never called and only the player shot (199) and stage jingle (381, 384) can ever play; all enemy/boss/explosion/tractor sounds are unreachable (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "G2": {
+   "score": 2,
+   "evidence": "initAudio + resume on first keydown (500), M toggles mute (502, 59, 66)."
+  },
+  "H1": {
+   "score": 0,
+   "evidence": "Player hitbox 10x16 vs 11x14 sprite (31, 318) is taller than the sprite; boss hitbox 13 wide vs 11-pixel sprite (319). Collision code never runs (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "H2": {
+   "score": 0,
+   "evidence": "explode() is a particle burst plus ring (213-220), not frame-by-frame sprites, and is never triggered (unreachable: no enemy ever appears, see severe bugs)."
+  },
+  "H3": {
+   "score": 0,
+   "evidence": "READY appears after the intro (389, 486) but overlaps the immediate 'STAGE 1 CLEAR!'; respawn delay and no-dive-during-respawn (194, 203, 238, 394) can never trigger since the player can never die."
+  }
+ },
+ "total": 24,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "382-384, 158-166, 389, 424",
+   "text": "startGame never builds a formation or entry groups for stage 1 (enemies=[]), so the first frame of play finds no enemies and declares the stage clear. No enemy ever appears in the game."
+  },
+  {
+   "severity": "severe",
+   "lines": "387-392, 424, 429, 390",
+   "text": "'stageclear' mode is never handled: stageClearTimer is never decremented and startStage is only reachable from challengeSummary, so the game soft-locks on 'STAGE 1 CLEAR!' forever; Enter does nothing (only works in title mode)."
+  },
+  {
+   "severity": "severe",
+   "lines": "182, 366, 411",
+   "text": "spawnGroup is only called by the challenge stage; normal-stage enemies would stay 'pending' indefinitely even if the formation were built, which would also block stage clear."
+  },
+  {
+   "severity": "severe",
+   "lines": "327-328, 334, 300",
+   "text": "Rescue can never happen: destroyEnemy makes the captive hostile and clears boss.captured before freeCaptured runs, so the dual fighter is unobtainable."
+  },
+  {
+   "severity": "severe",
+   "lines": "352-355, 176",
+   "text": "Challenge waves create enemies that are never added to game.enemies; kind 'challenge' falls through to the normal loop path; makeChallengePath unused."
+  },
+  {
+   "severity": "minor",
+   "lines": "26, 159-163",
+   "text": "Formation is 10 columns x 5 rows = 50 enemies with 10 bosses, not 4/16/20."
+  },
+  {
+   "severity": "minor",
+   "lines": "323, 207",
+   "text": "Boss always scores 400+ (even in formation); no diving bonus for Zako/Goei."
+  },
+  {
+   "severity": "minor",
+   "lines": "467",
+   "text": "Title score table lists Boss Galaga as 200000 PTS."
+  },
+  {
+   "severity": "minor",
+   "lines": "458, 382",
+   "text": "HUD shows 3 reserve ships while a ship is in play (should be 2)."
+  },
+  {
+   "severity": "minor",
+   "lines": "426-428",
+   "text": "formation.done is never set true, so the formation never breathes."
+  },
+  {
+   "severity": "minor",
+   "lines": "75",
+   "text": "sfxEnemyHit is defined but never called."
+  },
+  {
+   "severity": "minor",
+   "lines": "343",
+   "text": "Boss Galaga is excluded from player body collision."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "The file is tidy on the surface: a proper 60 Hz fixed-timestep loop, integer-scaled 224x288 canvas, a twinkling multi-coloured starfield, code-drawn sprites, synthesized audio and a title screen, all loading without console errors. But the gameplay is never wired together: starting a game never builds the formation, so the stage is declared clear on the first frame and the game then sits on 'STAGE 1 CLEAR!' forever because nothing handles the stageclear mode. Even with that fixed, normal-stage entry groups are never spawned, the formation is 50 enemies with 10 bosses, rescue of a captured fighter is logically impossible, and challenge-stage enemies are never added to the world. The play-test screenshots confirm the player alone on an empty field under 'STAGE 1 CLEAR!' for the whole 90 s. Much of a Galaga design exists as dead code, but as delivered it is not a game."
+}

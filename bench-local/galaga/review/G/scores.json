@@ -1,0 +1,237 @@
+{
+ "letter": "G",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single self-contained file (1-658), no external resources, no placeholders; some dead/leftover code (540-541 unused sprite + stray comment, 537 contradictory palette lines) but nothing truncated."
+  },
+  "A2": {
+   "score": 0,
+   "evidence": "Throws at load: line 88 passes SPR.player.p (arrays of numbers) to sprite() whose line 77 calls r.split -> TypeError 'r.split is not a function' (play-test pageerror, loads_clean false, canvas false; reproduced in node). Script stops at line 88: no input listeners, no loop, blank 300x150 canvas in every screenshot. Also line 611 loops i<7 over 'GALAGA' (6 chars) -> text() gets undefined -> s.length TypeError every title frame."
+  },
+  "A3": {
+   "score": 1,
+   "evidence": "Proper accumulator fixed step on rAF with dt clamp (647-653, STEP=1000/60 line 25), but it never runs because of the load error at line 88 (cap 1)."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "Sections for state/update/render exist (183-196, 252-506, 509-629) but quality is poor: duplicated text()/tw() (59-60), dead code (540), contradictory assignments (537), copy-pasted rescue blocks (454/461), unclear names (SumAlive, chx)."
+  },
+  "B1": {
+   "score": 0,
+   "evidence": "Canvas width/height are never set and there is no resize/scale code (only line 632 gets the context); the canvas stays the default 300x150 (screenshots show a 300x150 box), not 224x288 scaled. Only CSS crisp/centred on black (8-11)."
+  },
+  "B2": {
+   "score": 1,
+   "evidence": "80 multi-coloured stars, scrolling at varied speeds with sine twinkle (178-180); never runs due to load error (cap 1)."
+  },
+  "B3": {
+   "score": 0,
+   "evidence": "drawHUD (522-532) draws text via FONT, but FONT (38-40) maps only the 7 rows of TITLES to the letters A-G as 77-element arrays; every digit and letter H-Z is undefined, so 1UP, the score numbers and the HIGH SCORE value never render (A-G draw garbage). Only reserve-ship sprites and a single flag would show; never runs anyway."
+  },
+  "B4": {
+   "score": 0,
+   "evidence": "drawTitle (606-629) has a sprite score table but all text (labels, 'PRESS ENTER TO START') is unrenderable with the broken FONT, and line 611 indexes 'GALAGA'[6] -> undefined -> text() throws on s.length, crashing every title render."
+  },
+  "B5": {
+   "score": 0,
+   "evidence": "STAGE N/GAME OVER drawn with the broken font (596, 600); after a death updateStage sets G.mode='ready' (273) but update()/render() have no 'ready' case (254-262, 512-520) so the game freezes; gameOver (490) needs ships<=0, but ships are never decremented on death (485-489). No working flow."
+  },
+  "B6": {
+   "score": 0,
+   "evidence": "Load at 197 and save at 492 exist, but 197 is after the line-88 crash and the save is in gameOver(), which is unreachable (ships never drop on death; capture returns early at 393)."
+  },
+  "C1": {
+   "score": 1,
+   "evidence": "Arrow/A/D move horizontally (307-308), Enter starts (639), P pauses (634, 651). Space is broken: keydown stores key ' ' as G.keys[' '] (637) but the fire check reads G.keys.Space (310), so the player can never fire. Listeners never registered due to load error."
+  },
+  "C2": {
+   "score": 1,
+   "evidence": "G.shots.length<MAXSHOTS(2) check at 310 is correct, but firing can never happen in play (Space bug, load error)."
+  },
+  "C3": {
+   "score": 0,
+   "evidence": "G.ships=3 (633) but no extra-ship code at 20,000/70,000 anywhere, and killHalf (485-489) never decrements G.ships, so lives are effectively infinite."
+  },
+  "C4": {
+   "score": 1,
+   "evidence": "drawGameOver (598-605) computes shots fired, hits and ratio %, but labels/digits are unrenderable with the broken FONT and game over is unreachable."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Distinct Zako/Goei/Boss pixel sprites with 2 frames each (98-129) and a flap timer (269); never runs (cap 1)."
+  },
+  "D2": {
+   "score": 1,
+   "evidence": "Boss 150 formation (472) and 400/800/1600 by escort count (465-467); Zako 50/100 (483), but Goei also falls through to line 483 and gets 50/100 instead of 80/160 (escorts killed with the boss get 160 at 468)."
+  },
+  "D3": {
+   "score": 0,
+   "evidence": "makeEnemy sets hp:1 for every type (202) and boss hp is never set to 2, so the hp-- at 471 kills it on the first hit; the BP palette (537) is never seen. Diving bosses die in one hit (459-467)."
+  },
+  "D4": {
+   "score": 1,
+   "evidence": "Map gives 4 boss, 2x8 goei, 2x10 zako (210-214), but bosses occupy cols 0-3 and goei 0-7 (left-aligned, not centred), and spawn group 0 lists cols [3,4,5,6] (215) so 3 of the 4 bosses are never spawned and stay 'waiting' forever."
+  },
+  "D5": {
+   "score": 0,
+   "evidence": "Entry paths are bezier objects (221-222) but bezP/bezV are called with 2 args (344) while they take 4 point args (52-53) -> NaN positions; pathSpeed=1 with pathT>=1 (343) ends entry on the first frame, so enemies effectively teleport to their slots. No curved entry."
+  },
+  "D6": {
+   "score": 1,
+   "evidence": "Sways while spawnQueue is non-empty, then 'breathes' (296-297), but breath adds the same y offset to every slot (207): a vertical bob, not an expand/contract."
+  },
+  "D7": {
+   "score": 0,
+   "evidence": "Dive loops (355) and return loops (371-373) use the same 2-arg bezP/bezV calls -> NaN x/y; divers vanish and cannot collide. Fire timer logic (366) exists but positions are broken."
+  },
+  "D8": {
+   "score": 0,
+   "evidence": "spawnEscorts (359-361) exists but escorts in updateLooping use e._ox/e._oy, which are never set (370) -> NaN; the boss dive itself is NaN (D7). Dive timer (203, 348) does not scale with stage."
+  },
+  "D9": {
+   "score": 0,
+   "evidence": "collisions() only tests f.L/f.R halves when .active (439-446); newFighter (302-304) leaves both inactive for a normal single ship, so the player can never be hit by bullets or enemies. drawPlayer (556-557) likewise never draws the single ship."
+  },
+  "E1": {
+   "score": 1,
+   "evidence": "startBeam stops the beam at y=150 (376-378); drawBeam draws a widening gradient cone with moving scan lines (571-580); but the boss sprite stays in its slot while only beamX/beamY move, and it never runs (cap 1)."
+  },
+  "E2": {
+   "score": 0,
+   "evidence": "capturePlayer (392-393) returns immediately for a single ship because neither f.L nor f.R is active, so capture never happens; even the intended branch (397-399) activates both halves instead of removing the ship."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "Rescue branches (453-454, 460-461) only flip slot.captured; no captive flight/dock, and they are unreachable because capture never occurs."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "Dual-fighter code (311, 315-319, 439-440) depends on L/R being active, which only capture would set; unreachable. firePlayerShot offsets both shots by 12 (315) rather than one per ship."
+  },
+  "E5": {
+   "score": 0,
+   "evidence": "Formation-kill branch (473-476) spawns a 'hostile' zako for the captive, but it is unreachable because capture never happens."
+  },
+  "E6": {
+   "score": 0,
+   "evidence": "holdCap firing (384-386) only reachable after capturePlayer, which returns early; no fire from a captive when its boss dives."
+  },
+  "F1": {
+   "score": 0,
+   "evidence": "Stage clear requires every enemy in 'formation' (278-280), but 3 bosses stay 'waiting' forever (215), so stageCleared/forceClear never trigger and the stage never ends."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "isChallenge is correct (234) but the challenge stage is unreachable (F1). buildChallenge (238-246) sets all 40 to 'challenge' at once on the same loop (all waves fly together), challengeWave indexes i*8+wave*8 (249) wrongly, and movement uses the NaN bezP call (406)."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "100 per hit is added (482), but the wave/perfect bonus is only displayed (592-594), never added to G.score; bonus is floor(hits/8)*1000, not per whole wave. Unreachable."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "badgeFor returns the 1/5/10/20/30/50 denomination (235), but the HUD draws a single flag plus a number (530-531) in the broken font instead of a row of badges."
+  },
+  "G1": {
+   "score": 1,
+   "evidence": "Distinct synthesized shot, enemyHit, enemyDie, bossHit, playerDie, beam and stage jingle (163-174); never runs (cap 1). stage() plays only on stage clear (285), not before a stage."
+  },
+  "G2": {
+   "score": 1,
+   "evidence": "Snd.init/resume on keydown (638), M toggles mute (641); the listener is never registered due to the line-88 crash (cap 1)."
+  },
+  "H1": {
+   "score": 1,
+   "evidence": "Enemy hitbox 70% of sprite (449); player box 16x18 (439-446) is wider than the 10-px-wide player sprite (82-87)."
+  },
+  "H2": {
+   "score": 1,
+   "evidence": "Enemy 'explosion' has two identical frames (134-143), so no real animation; player gets an expanding ring (322, 566-567)."
+  },
+  "H3": {
+   "score": 0,
+   "evidence": "Respawn delay 90 and READY text (273, 585) exist, but mode 'ready' has no case in update() or render() (254-262, 512-520), so after the first death the game freezes on a blank screen."
+  }
+ },
+ "total": 18,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "77, 88",
+   "text": "sprite() calls r.split on rows that are already number arrays (SPR.playerCap) -> TypeError at load; the script stops, nothing renders, no input or loop (play-test pageerror, blank 300x150 canvas)."
+  },
+  {
+   "severity": "severe",
+   "lines": "611",
+   "text": "Title loop runs i<7 over the 6-char 'GALAGA'; text() receives undefined and throws on s.length every title frame."
+  },
+  {
+   "severity": "severe",
+   "lines": "29-40, 59-60",
+   "text": "FONT is built from the 7 rows of TITLES mapped to letters A-G; all other letters and every digit are undefined, so scores, HUD, STAGE/GAME OVER/READY text never render."
+  },
+  {
+   "severity": "severe",
+   "lines": "632",
+   "text": "Canvas width/height never set and no scaling code: the canvas stays 300x150, not a scaled 224x288 playfield."
+  },
+  {
+   "severity": "severe",
+   "lines": "310, 637",
+   "text": "Fire checks G.keys.Space but keydown stores ' '; the player can never shoot."
+  },
+  {
+   "severity": "severe",
+   "lines": "52-53, 344, 365, 372, 406, 410",
+   "text": "bezP/bezV take 4 point args but are called with (pathObject, t) -> NaN positions for entering, diving, looping and challenge enemies."
+  },
+  {
+   "severity": "severe",
+   "lines": "215",
+   "text": "Boss spawn group uses cols [3,4,5,6] but bosses are cols 0-3; 3 bosses stay 'waiting' forever, so a stage can never be cleared."
+  },
+  {
+   "severity": "severe",
+   "lines": "302-304, 439-446, 556-557",
+   "text": "A single fighter has L/R inactive; collisions and drawPlayer only consider active halves, so the player is invisible and invulnerable."
+  },
+  {
+   "severity": "severe",
+   "lines": "254-262, 273, 512-520",
+   "text": "Respawn sets mode 'ready', which neither update() nor render() handles -> permanent freeze after a death."
+  },
+  {
+   "severity": "severe",
+   "lines": "392-393",
+   "text": "capturePlayer returns early for a single ship: tractor-beam capture, rescue and dual fighter never happen."
+  },
+  {
+   "severity": "minor",
+   "lines": "202, 471",
+   "text": "Boss hp is 1, so Boss Galaga dies in one hit and never changes colour."
+  },
+  {
+   "severity": "minor",
+   "lines": "483",
+   "text": "Goei scored as 50/100 instead of 80/160."
+  },
+  {
+   "severity": "minor",
+   "lines": "485-489",
+   "text": "Losing a ship never decrements G.ships and there are no extra-ship awards; game over is unreachable."
+  },
+  {
+   "severity": "minor",
+   "lines": "238-249, 592-594",
+   "text": "Challenge stage launches all 40 at once on one path; bonus/PERFECT shown but never added to the score."
+  },
+  {
+   "severity": "minor",
+   "lines": "134-143",
+   "text": "The enemy explosion's two frames are identical."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "The file crashes at load (line 88 passes number arrays to a sprite() that calls split), so in the play-test it shows only a blank default 300x150 canvas: no title, no input, no loop. Even past that crash the code is deeply broken: the bitmap font is made from 7 rows of a title array so almost no text or digits can render, the title render throws, the canvas is never sized, Space never fires, every bezier path is called with the wrong arguments and yields NaN positions, three bosses never spawn so no stage can end, the single fighter is invisible and invulnerable, the respawn 'ready' mode freezes the game, and tractor-beam capture returns immediately. The outline (state object, update/render split, Web Audio sound set, fixed-step loop, Galaga-shaped feature list) resembles Galaga on paper, but almost none of it can work; it is not a playable Galaga clone."
+}

@@ -1,0 +1,222 @@
+{
+ "letter": "L",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single complete file (772 lines), no placeholders; no external resources (only a system font name, l.142)."
+  },
+  "A2": {
+   "score": 2,
+   "evidence": "result.json: loads_clean true, survives_play true, 0 errors; no load errors found in the code."
+  },
+  "A3": {
+   "score": 2,
+   "evidence": "Accumulator loop with STEP=1000/60, catch-up capped at 250 ms, rAF-driven (l.26, 760-768)."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "Sections state/update/render are separated (l.192-615 vs 618-741) with headers, but notable dead/unused code: startBeam (l.268), freeCaptured (l.346), divePts (l.265), enemyHit sound, a no-op loop (l.563), bannerSub assigned twice (l.493-494)."
+  },
+  "B1": {
+   "score": 2,
+   "evidence": "224x288 canvas, integer scale via Math.floor, image-rendering pixelated, flex-centred on black (l.8-12, 26-36)."
+  },
+  "B2": {
+   "score": 2,
+   "evidence": "95 stars in 6 colours scrolling at varied speeds with sine twinkle alpha (l.149-154)."
+  },
+  "B3": {
+   "score": 2,
+   "evidence": "1UP score, HIGH SCORE, reserve ships bottom-left, flag bottom-right (l.618-635); flag number drawn at x=226, off the 224-wide canvas (l.630,634); see F4."
+  },
+  "B4": {
+   "score": 2,
+   "evidence": "Title, score table for zako/goei/boss with formation/flight values, PRESS ENTER TO START (l.685-706; screenshot 1-title)."
+  },
+  "B5": {
+   "score": 2,
+   "evidence": "'STAGE N' banner in state 'stage' (l.314, 723-727), GAME OVER (l.318-321, 731), back to title after 240 frames or Enter (l.610, 752). GAME OVER text drawn twice overlapping (l.725 and 731)."
+  },
+  "B6": {
+   "score": 2,
+   "evidence": "Loaded from localStorage at l.203, saved at game over l.320 via saveHi l.205."
+  },
+  "C1": {
+   "score": 2,
+   "evidence": "Arrows and a/d move horizontally (l.506-508), Space fires (l.510), Enter starts (l.750-751), P pauses (l.754). Uppercase A/D not handled (minor)."
+  },
+  "C2": {
+   "score": 2,
+   "evidence": "fire() refuses when pbullets.length>=2 (l.327). Dual mode could reach 3 but dual is unreachable."
+  },
+  "C3": {
+   "score": 1,
+   "evidence": "lives=3 with game over only when lives<0 (l.193, 301, 338-339) gives 4 ships (3 in reserve drawn by l.626) instead of 3. Extra ship at 20,000 then +70,000 correct (l.207, 614)."
+  },
+  "C4": {
+   "score": 2,
+   "evidence": "Game-over screen shows shots fired, hits, hit-miss ratio % (l.731-735). Hits counts kills only, not first Boss hits (l.388, 527)."
+  },
+  "D1": {
+   "score": 1,
+   "evidence": "Three distinct pixel shapes (l.95-107) but both frames of every sprite are identical, so no wing flap (l.97-98,101-102,105-106); colours use letters 'y','b','g','r' which are invalid CSS colours, so drawSprite (l.164) paints with whatever fillStyle was last set (screenshots: all white, then all purple after a Boss tint); Goei is a 4x4 block."
+  },
+  "D2": {
+   "score": 2,
+   "evidence": "enemyScore: 50/100, 80/160, Boss 150 / 400 / 800 / 1600 by diving escorts (l.375-386)."
+  },
+  "D3": {
+   "score": 2,
+   "evidence": "Boss hp 2 (l.259), first hit sets hp=1 and bossHit (l.527), drawn purple tint #7a3bff (l.640; seen in 4-play-045s)."
+  },
+  "D4": {
+   "score": 2,
+   "evidence": "Rows: 4 boss, 8+8 goei, 10+10 zako = 40 (l.210-223; screenshot 3)."
+  },
+  "D5": {
+   "score": 1,
+   "evidence": "Groups queued from top/left/right on Bezier paths (l.232-254), but the update treats the 19 sampled points as control points: bez(path[0..3]) (l.405) only covers the first ~17% of the curve, then enemies snap to their slot (l.404, 409)."
+  },
+  "D6": {
+   "score": 0,
+   "evidence": "No sway: formationOffset = sin(stage*0.5)*10 is a constant per stage (l.480). Breathing only starts when formationComplete, which is set only when 0 enemies remain (l.569-570), so it is never visible."
+  },
+  "D7": {
+   "score": 0,
+   "evidence": "makeDiver computes divePts (l.265) but the diving update uses e.path[0..3] (l.418), i.e. the start of the old entry path (off-screen origin), so divers jump to their spawn point and drift; they never dive at the player. Return path likewise truncated then snaps to slot (l.416-422). Enemy fire during dive exists (l.419)."
+  },
+  "D8": {
+   "score": 1,
+   "evidence": "Boss may take one Goei escort (escorts[0], never two, l.276-279); dive interval drops with stage (l.310) and dive speed rises (l.266); but the dive motion itself is broken (D7)."
+  },
+  "D9": {
+   "score": 2,
+   "evidence": "Enemy bullet or body hit kills player (l.537-559); rammed enemy destroyed (l.553). Body hits rarely reachable since divers never descend."
+  },
+  "E1": {
+   "score": 0,
+   "evidence": "startBeam (l.268) is never called; doDive only calls makeDiver (l.272-283). Beam drawing (l.657-670) never runs."
+  },
+  "E2": {
+   "score": 0,
+   "evidence": "Capture code (l.433-443) lives in the 'beam' state, which is never entered. Red fighter sprite also uses invalid colour 'r' (l.113)."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "freeCaptured (l.346) is never called anywhere; boss.captured is never set true (l.437 sets only the global)."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "Dual fire/half-loss code exists (l.328, 543, 554) but player.dual is only set via capture/dock paths that never run (l.343, 465)."
+  },
+  "E5": {
+   "score": 0,
+   "evidence": "destroyEnemy checks e.captured (l.391), never set true; unreachable."
+  },
+  "E6": {
+   "score": 0,
+   "evidence": "Captive firing code (l.457-460) only runs when a captured fighter exists, which never happens."
+  },
+  "F1": {
+   "score": 2,
+   "evidence": "When no enemies and queue empty, stageCleared increments stage and calls beginStage (l.567-572, 317), after a one-frame formationComplete toggle."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "Challenging stage selected correctly (l.307), but loopPath samples are used as Bezier control points (l.449), so each enemy moves only from x=-14 to about -2.5 (or 238 to 226.5): off-screen, unhittable. Waves only advance on 8 hits (l.488), so wave 0 respawns every 150 frames forever (l.499): soft-lock at stage 3. Also splice inside for-of (l.448) skips enemies."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "100 per hit, 1000 per wave, 10,000 perfect and NUMBER OF HITS banner exist (l.376, 487-496) but cannot be reached (F2); total line string-concatenates '10000' (l.494)."
+  },
+  "F4": {
+   "score": 1,
+   "evidence": "Picks largest denomination <= stage (l.628-629) but draws a single generic flag whose number is off-canvas (l.630-634); no per-denomination badges or counts."
+  },
+  "G1": {
+   "score": 1,
+   "evidence": "Called: shot (l.330), enemyDie (l.392), bossHit (l.527), playerDie (l.337), stage jingle (l.315). enemyHit (l.72) is never called and beam (l.76) only from startBeam, which never runs: 5 of 7."
+  },
+  "G2": {
+   "score": 2,
+   "evidence": "AudioSys.ensure on every keydown creates/resumes the context (l.41-48, 749); M toggles mute (l.49, 755)."
+  },
+  "H1": {
+   "score": 1,
+   "evidence": "Enemy boxes within sprites (l.370-374). Player hitbox is 10x8 at x-5..x+5 (l.366) while the sprite is drawn 7 wide at x-8..x-1 (l.169): larger and shifted right of the visible ship."
+  },
+  "H2": {
+   "score": 0,
+   "evidence": "drawExplosion iterates the frame's row strings as if they were pixel objects (l.173): p.x/p.y are undefined, fillRect gets NaN, nothing is drawn. Only particle sparks show (l.357-360, 680)."
+  },
+  "H3": {
+   "score": 2,
+   "evidence": "Respawn state with 90-frame delay and READY text (l.340, 602-604, 729); updateDives only runs in 'play' (l.471); new ship invulnerable 90 frames (l.160). Enemy bullets freeze mid-air during respawn (minor)."
+  }
+ },
+ "total": 46,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "265, 405, 418, 422, 449, 466",
+   "text": "Paths are arrays of 19-27 sampled points but every mover calls bez(path[0],path[1],path[2],path[3]), using the first four samples as control points: entries cover ~17% of their curve then teleport to slots, divers jump to their entry origin instead of diving at the player (divePts unused), returns snap."
+  },
+  {
+   "severity": "severe",
+   "lines": "289-297, 448-449, 487-499",
+   "text": "Challenging stage soft-locks: enemies only move between x=-14 and -2.5 (or 238 to 226.5), off-screen and unhittable; waves only advance after 8 hits, so wave 0 respawns forever and stage 3 never ends."
+  },
+  {
+   "severity": "severe",
+   "lines": "268, 272-283, 346",
+   "text": "startBeam and freeCaptured are never called: no tractor beam, capture, rescue or dual fighter; the whole signature mechanic is dead code."
+  },
+  {
+   "severity": "severe",
+   "lines": "407, 410",
+   "text": "All 40 formation enemies fire continuously (each every 150-320 frames), producing a constant bullet curtain; the play-test bot lost all ships within seconds of each start (title screen in 4-play-015s, 030s, 060s)."
+  },
+  {
+   "severity": "minor",
+   "lines": "97-123, 164",
+   "text": "Sprite colours are letters ('y','b','g','r','w') that are invalid CSS colours, so sprites draw in the previous fillStyle (all white, then all purple after a Boss is hit); the 2 animation frames are identical so there is no wing flap."
+  },
+  {
+   "severity": "minor",
+   "lines": "173",
+   "text": "drawExplosion iterates row strings as pixel objects; explosions draw nothing."
+  },
+  {
+   "severity": "minor",
+   "lines": "480, 569-570",
+   "text": "No formation sway (constant offset) and breathing only starts after all enemies are dead, i.e. never seen."
+  },
+  {
+   "severity": "minor",
+   "lines": "193, 301, 338-339, 626",
+   "text": "Player gets 4 ships (3 in reserve) instead of 3."
+  },
+  {
+   "severity": "minor",
+   "lines": "366, 169",
+   "text": "Player hitbox 10 px wide, offset right of the 7 px sprite."
+  },
+  {
+   "severity": "minor",
+   "lines": "630-634",
+   "text": "Stage badge number drawn at x=226, off the 224 px canvas; one generic flag for all stages."
+  },
+  {
+   "severity": "minor",
+   "lines": "725, 731",
+   "text": "GAME OVER drawn twice at overlapping positions."
+  },
+  {
+   "severity": "minor",
+   "lines": "72, 76",
+   "text": "enemyHit sound never used; beam sound unreachable."
+  }
+ ],
+ "verdict": "barely playable",
+ "summary": "The file is tidy at first glance (sectioned code, fixed-timestep loop, localStorage high score, correct score values, a proper title/HUD/game-over flow) and loads without errors, but almost every motion system is broken by one recurring mistake: point arrays from bezierPath/loopPath are fed back into bez() as four control points, so entries cover a fraction of their curve and teleport into place, dives never come at the player (the computed divePts is never used), and challenging-stage enemies stay off-screen while the wave counter waits for hits that cannot happen, soft-locking stage 3. The tractor beam, capture, rescue and dual fighter are dead code (startBeam and freeCaptured are never called). Sprite colours use invalid CSS colour letters, so everything draws in whatever colour was last set, wing flaps are identical frames, explosions draw nothing, the formation neither sways nor breathes, and all 40 formation enemies fire constantly, which killed the bot within seconds. It reads as a static shooting gallery under a bullet curtain rather than Galaga."
+}

@@ -1,0 +1,19 @@
+{
+ "loads_clean": false,
+ "canvas": false,
+ "title_drawn": false,
+ "animates_idle": false,
+ "starts": false,
+ "moves": false,
+ "survives_play": true,
+ "alive_at_end": false,
+ "passed": 1,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Unexpected token ','"
+  }
+ ],
+ "n_errors": 1
+}

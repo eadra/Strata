@@ -1,0 +1,458 @@
+{
+ "iq3_s-medium-s1": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 3,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Assignment to constant variable."
+   }
+  ],
+  "n_errors": 1
+ },
+ "iq3_s-medium-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 4.1,
+    "text": "Cannot read properties of undefined (reading 'width')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "iq3_s-off-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_s-off-s2": {
+  "loads_clean": false,
+  "canvas": false,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 1,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "r.split is not a function"
+   }
+  ],
+  "n_errors": 1
+ },
+ "iq3_xxs-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-medium-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Unexpected token ')'"
+   }
+  ],
+  "n_errors": 1
+ },
+ "iq3_xxs-off-s1": {
+  "loads_clean": true,
+  "canvas": false,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": false,
+  "alive_at_end": false,
+  "passed": 5,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.0,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.1,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.1,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.1,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.1,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.1,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.2,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.3,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.3,
+    "text": "Cannot read properties of null (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.3,
+    "text": "Cannot read properties of null (reading '0')"
+   }
+  ],
+  "n_errors": 5611
+ },
+ "unsloth-ud-q4_k_xl-medium-s1": {
+  "loads_clean": false,
+  "canvas": false,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 1,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Unexpected token ','"
+   }
+  ],
+  "n_errors": 1
+ },
+ "unsloth-ud-q4_k_xl-medium-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "unsloth-ud-q4_k_xl-off-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 7,
+  "errors": [],
+  "n_errors": 0
+ },
+ "unsloth-ud-q4_k_xl-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "sonnet-5-5-off-r1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-medium32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "iq3_xxs-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-medium-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-medium32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-off-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "qwen3.8-27b-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ }
+}
