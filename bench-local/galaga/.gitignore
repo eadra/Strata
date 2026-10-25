@@ -4,3 +4,5 @@ __pycache__/
 # review/<letter>/ holds blind copies of out/ and play/ (blind.py recreates them); only the reviewers' scores are kept
 review/*/*
 !review/*/scores.json
+# the Playwright venv for playtest.py (recreate: see README)
+pw/

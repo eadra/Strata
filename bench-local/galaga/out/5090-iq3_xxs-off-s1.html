@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GALAGA</title>
+<style>
+  html,body{height:100%;margin:0;background:#000;overflow:hidden;}
+  #game{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);image-rendering:pixelated;image-rendering:crisp-edges;touch-action:none;}
+</style>
+</head>
+<body>
+<canvas id="game" width="224" height="288"></canvas>
+<script>
+"use strict";
+/* ============================================================================
+   GALAGA — faithful browser clone (single file, no external resources)
+   Architecture: state object + fixed-timestep update() + render(). All art is
+   drawn from pixel-sprite data or canvas primitives; all sound via Web Audio.
+============================================================================ */
+
+// ---- constants -------------------------------------------------------------
+const W = 224, H = 288;                       // arcade resolution (3:4)
+const STEP = 1000 / 60;                       // fixed timestep (ms)
+const PLAYER_Y = 250;                         // player row
+
+// ---- pixel-sprite data (strings -> colour map) -----------------------------
+const PAL = { '.':null,' ':null,'w':'#ffffff','r':'#ff4a3c','o':'#ffb21a','y':'#ffe600',
+              'g':'#20d020','b':'#2f7bff','p':'#9a5cff','k':'#111111' };
+
+function spr(rows){ return { w:rows[0].length, h:rows.length, rows }; }
+const SHIP = spr(["..w..",".www.","wwwww","bbbbb"]);
+const ZAKO = spr([
+  ".b...b.",
+  "bb.y.bb",
+  "bbbybbb",
+  "b.yyy.b",
+  "..yyy..",
+  "...y..." ]);
+const GOEI = spr([
+  "r.....r",
+  "rr.o.rr",
+  "rrroorr",
+  ".ryyr.",
+  "..oo..",
+  "..o..."]);
+const BOSS = spr([
+  "..ggg..",
+  ".ggggg.",
+  "ggyoygg",
+  "g.ggg.g",
+  ".g.g.g.",
+  "..g.g.."]);
+
+function drawSprite(ctx, s, x, y, flap){
+  const rows = s.rows;
+  for(let j=0;j<rows.length;j++){
+    const row = rows[j];
+    for(let i=0;i<row.length;i++){
+      let ch = row[i];
+      if(ch==='.'||ch===' ') continue;
+      if(flap && (j===0 || j===4)) continue;           // 2-frame wing flap
+      const col = PAL[ch] || '#ffffff';
+      ctx.fillStyle = col;
+      ctx.fillRect((x+i)|0, (y+j)|0, 1, 1);
+    }
+  }
+}
+
+// ---- explosion frames (pixel data) -----------------------------------------
+const EXPLO_FRAMES = [ spr(["...r...","..rrr..",".rrorr.","rrryorr",".rrorr.","..rrr..","...r..."]),
+                       spr(["o.....o","..r.r..",".r.o.r.","...o...",".r.o.r.","..r.r..","o.....o"]),
+                       spr(["o.....o","......","..y.y..",".......","..y.y..","......","o.....o"]) ];
+
+function drawExplosion(ctx, e){
+  const f = EXPLO_FRAMES[e.frame % EXPLO_FRAMES.length];
+  const sc = 1 + e.frame * 0.45;
+  const off = Math.floor((f.w*sc - f.w)/2);
+  for(let j=0;j<f.rows.length;j++){
+    const row=f.rows[j];
+    for(let i=0;i<row.length;i++){
+      const ch=row[i]; if(ch==='.'||ch===' ') continue;
+      ctx.fillStyle = PAL[ch] || '#fff';
+      ctx.fillRect((e.x-off+i*sc)|0, (e.y-off+j*sc)|0, Math.ceil(sc), Math.ceil(sc));
+    }
+  }
+}
+
+// ---- parametric entry / dive curves ----------------------------------------
+function bez(p1,p2,p3,t){ const a=1-t; return { x:a*a*p1.x+2*a*t*p2.x+t*t*p3.x,
+                                                y:a*a*p1.y+2*a*t*p2.y+t*t*p3.y }; }
+function loopPath(t, cx){ const s=Math.sin(t*Math.PI*2), c=Math.cos(t*Math.PI*2); return { x:cx+s*70, y:95+c*58 }; }
+
+// ---- sound (Web Audio, synthesized) ----------------------------------------
+let actx=null, master=null, muted=false;
+function initAudio(){ if(actx) return; try{ actx=new (window.AudioContext||window.webkitAudioContext)(); master=actx.createGain(); master.gain.value=0.35; master.connect(actx.destination);}catch(e){} }
+function tone(freq,dur,type,vol,glide){ if(!actx||muted)return; const t=actx.currentTime; const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(freq,t); if(glide) o.frequency.exponentialRampToValueAtTime(Math.max(1,glide),t+dur);
+  g.gain.setValueAtTime(vol==null?0.3:vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.connect(g).connect(master); o.start(t); o.stop(t+dur+0.02); }
+function noise(dur,vol){ if(!actx||muted)return; const t=actx.currentTime; const b=actx.createBuffer(1,Math.floor(actx.sampleRate*dur),actx.sampleRate); const d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*(1-i/d.length); const s=actx.createBufferSource(); s.buffer=b; const g=actx.createGain(); g.gain.value=vol||0.4; s.connect(g).connect(master); s.start(t); }
+function sndShot(){ tone(900,0.07,'square',0.22,380); }
+function sndHitEnemy(){ tone(520,0.10,'square',0.22,140); noise(0.06,0.15); }
+function sndDestroy(){ tone(300,0.16,'sawtooth',0.28,90); noise(0.12,0.22); }
+function sndBossHit(){ tone(700,0.08,'square',0.24,500); tone(350,0.14,'square',0.20,120); }
+function sndExplode(){ noise(0.4,0.5); tone(160,0.4,'sawtooth',0.3,40); }
+function sndBeam(){ if(!actx||muted)return; const t=actx.currentTime; const o=actx.createOscillator(),g=actx.createGain(); o.type='square';
+  o.frequency.setValueAtTime(280,t); for(let i=0;i<4;i++){o.frequency.linearRampToValueAtTime(650,t+0.12+i*0.16); o.frequency.linearRampToValueAtTime(300,t+0.24+i*0.16);} g.gain.setValueAtTime(0.18,t); g.gain.linearRampToValueAtTime(0.24,t+0.7); g.gain.linearRampToValueAtTime(0,t+0.95); o.connect(g).connect(master); o.start(t); o.stop(t+1); }
+function sndCapture(){ tone(1200,0.18,'square',0.24,300); }
+function sndDock(){ tone(600,0.12,'triangle',0.25,900); }
+function sndExtra(){ tone(700,0.1,'square',0.25,900); tone(1000,0.14,'square',0.25,1300); }
+function jingle(){ if(!actx||muted)return; const notes=[659,784,988,784,988,1319]; let i=0; const iv=setInterval(()=>{ tone(notes[i],0.12,'square',0.25); if(++i>=notes.length)clearInterval(iv); },130); }
+
+// ---- starfield -------------------------------------------------------------
+const STARS=[]; for(let i=0;i<70;i++) STARS.push({x:Math.random()*W,y:Math.random()*H,spd:0.2+Math.random()*0.9,tw:Math.random(),col:['#fff','#8fd0ff','#ffd0d0','#cfe'][i%4]});
+
+// ---- game state ------------------------------------------------------------
+const G={ state:'attract', t:0, score:0, high:+(localStorage.getItem('galaga_high')||0), lives:3, extraAt:[20000,90000,160000], nextExtra:0,
+  stage:1, enemies:[], bullets:[], shots:[], explosions:[], captured:null, dual:false, player:null,
+  entryTimer:0, diveTimer:0, challengeWave:-1, challengeHits:0, waveCount:0, perfect:true, bonusTotal:0, msg:'', msgT:0,
+  shotsFired:0, hits:0, pause:false, stageCompleteT:0, gameOverAt:0 };
+
+// ---- formation layout ------------------------------------------------------
+const FORM={ cols:[84,105,126,147], rows:{ boss:38, goei1:60, goei2:82, zako1:104, zako2:126 } };
+function makeFormation(){ const list=[]; let id=0;
+  for(let c=0;c<4;c++) list.push({type:'boss',slot:{x:FORM.cols[c],y:FORM.rows.boss},id:id++});
+  for(let r=0;r<2;r++) for(let c=0;c<8;c++) list.push({type:'goei',slot:{x:30+c*24,y:r?FORM.rows.goei2:FORM.rows.goei1},id:id++});
+  for(let r=0;r<2;r++) for(let c=0;c<10;c++) list.push({type:'zako',slot:{x:18+c*20,y:r?FORM.rows.zako2:FORM.rows.zako1},id:id++});
+  return list; }
+
+function spawnStage(){ G.enemies=[]; G.bullets=[]; G.shots=[]; G.captured=null; G.dual=false; G.entryTimer=0; G.diveTimer=40; G.msg=''; G.msgT=0;
+  const layout=makeFormation();
+  for(let i=0;i<layout.length;i++){ const e=layout[i];
+    e.state='entry'; e.t=Math.max(0,(i-1)*0.05); e.speed=0.020+Math.min(i,30)*0.0003; e.dir=i%2?1:-1; e.fireT=(Math.random()*80)|0; }
+  G.state='stage';
+}
+
+// ---- helpers ---------------------------------------------------------------
+function clamp(v,a,b){ return v<a?a:v>b?b:v; }
+function aabb(a,b){ return a.x<b.x+b.w && a.x+a.w>b.x && a.y<b.y+b.h && a.y+a.h>b.y; }
+function playerHitboxes(){ const p=G.player; if(!p||!p.alive)return[]; const hs=[{x:p.x,y:PLAYER_Y,w:16,h:10}]; if(G.dual)hs.push({x:p.x+24,y:PLAYER_Y,w:16,h:10}); return hs; }
+function addExplosion(x,y){ G.explosions.push({x:x+8,y:y+5,frame:0,timer:0}); }
+
+// ---- entry / formation motion ----------------------------------------------
+const F=0.7; // sway fraction of half-widths
+function updateEntry(e){ e.t+=e.speed; if(e.t>=1){ const s=e.slot; e.x=s.x-8+Math.sin(G.t*0.02)*(F*s.x); e.y=s.y+Math.sin(G.t*0.03)*4; e.state='formation'; return; }
+  const cx=clamp(e.dir>0?e.t*W:W-e.t*W,0,W), cy=150-75*Math.sin(Math.PI*e.t); e.x=cx-8+Math.sin(G.t*0.02)*(F*cx); e.y=cy; }
+function updateFormation(e){ const s=e.slot; e.x=s.x-8+Math.sin(G.t*0.02)*(F*s.x); e.y=s.y+Math.sin(G.t*0.03)*4; if(e.captive){e.captive.x=e.x+16;e.captive.y=e.y+12;} }
+
+// ---- dive path -------------------------------------------------------------
+function startDive(e,escort){ e.state='dive'; e.diveT=0; e.speed=0.013+G.stage*0.0015+(escort?0.004:0); e.fireT=(Math.random()*70)|0; }
+function diveTarget(e){ return {x:clamp(G.player.x+8+(Math.random()*60-30),10,W-20), y:H+20}; }
+function updateDive(e){ e.diveT+=e.speed; const p=bez({x:e.x+8,y:e.y+5},e.ctrl,diveTarget(e),clamp(e.diveT,0,1)); e.x=p.x-8; e.y=p.y-5;
+  if(--e.fireT<=0 && G.player.alive){ enemyFire(e); e.fireT=(60+Math.random()*70)|0; }
+  if(e.captive) e.captive.x=e.x+16, e.captive.y=e.y+12;
+  if(e.diveT>=1||e.y>H){ startReentry(e); } }
+function startReentry(e){ e.state='reentry'; e.reT=0; e.speed=0.014+G.stage*0.0012; e.ctrl={x:clamp(84+(Math.random()*56-28),30,190), y:e.y}; }
+function updateReentry(e){ e.reT+=e.speed; const p=bez({x:e.x+8,y:H+10},e.ctrl,{x:e.slot.x+8,y:e.slot.y+5},clamp(e.reT,0,1)); e.x=p.x-8; e.y=p.y-5; if(e.reT>=1){ e.state='formation'; } }
+
+// ---- tractor beam ----------------------------------------------------------
+function startCapture(e){ e.state='beam'; e.beamT=0; e.beamDur=64+G.stage*3; sndBeam(); }
+function updateBeam(e){ e.beamT++; const s=e.slot; e.x=s.x-8+Math.sin(G.t*0.02)*(F*s.x); e.y=s.y+14; if(--e.fireT<=0&&G.player.alive){ enemyFire(e); e.fireT=(70)|0; }
+  if(G.captured){ G.captured.x=e.x+16; G.captured.y=e.y+12; }
+  else { const p=G.player; if(p.alive && !p.beamCaught){ const cx=p.x+8, cy=PLAYER_Y+5, dx=Math.abs(cx-(e.x+8)); const halfW=4+(e.beamT/e.beamDur)*36; if(e.y<cy && e.y>10 && dx<halfW){ beginCapture(e,p); } } }
+  if(e.beamT>=e.beamDur){ endBeam(e); } }
+function endBeam(e){ e.state='dive'; e.diveT=0; e.speed=0.02+G.stage*0.0015; e.fireT=(Math.random()*60)|0; if(G.captured) G.captured.beam=false; }
+function beginCapture(e,p){ sndCapture(); p.alive=false; addExplosion(p.x,PLAYER_Y); G.dual=false;
+  const cap={x:e.x+16,y:e.y+12,beam:true}; e.state='formation'; e.captive=cap; G.captured=cap; }
+
+// ---- firing ---------------------------------------------------------------
+function enemyFire(e){ if(G.bullets.length>=8)return; const mx=e.x+8,my=e.y+9,dx=(G.player?G.player.x+8-mx:0),dy=PLAYER_Y-my; const L=Math.hypot(dx,dy)||1; G.bullets.push({x:mx,y:my,vx:dx/L*2.3,vy:dy/L*2.3}); }
+function playerFire(){ if(!G.player||!G.player.alive)return; let n=G.shots.length; const hs=playerHitboxes(); for(const h of hs){ if(n>=2)break; if(hs.some(o=>o!==h&&Math.abs((o.x+8)-(h.x+8))<16 && Math.abs((o.y+5)-(h.y+5))<14))continue; G.shots.push({x:h.x+7,y:h.y,vx:0,vy:-7}); n++; } if(n) sndShot(); G.shotsFired+=n; }
+
+// ---- challenge stage -------------------------------------------------------
+function spawnChallenge(){ G.enemies=[]; G.bullets=[]; G.shots=[]; G.state='challenge'; G.challengeWave=-1; G.challengeHits=0; G.waveCount=0; G.perfect=true; G.msg='CHALLENGING STAGE'; G.msgT=80; }
+function spawnChallengeWave(w){ const dir=w%2?1:-1; for(let k=0;k<8;k++){ G.enemies.push({type:'zako',state:'challenge',dir,t:k*0.045,speed:0.017+G.stage*0.0006,cx:(dir>0?-30:W+30)+(k%2?18:-18),fireT:999}); } }
+
+// ---- stage flow ------------------------------------------------------------
+function startStage(n){ G.stage=n; spawnStage(); jingle(); }
+function advanceStage(){ const n=G.stage+1; if(n===3||((n-3)%4===0)) spawnChallenge(); else startStage(n); }
+function completeStage(){ G.state='stageComplete'; G.stageCompleteT=75; }
+
+// ---- player ---------------------------------------------------------------
+function newPlayer(x){ return {x:clamp(x,2,W-18), alive:true, beamCaught:false}; }
+function killPlayer(){ if(!G.player||!G.player.alive)return; addExplosion(G.player.x,PLAYER_Y); sndExplode(); G.dual=false; G.lives--; G.player.alive=false; G.msg='READY'; G.msgT=120; }
+
+// ---- scoring --------------------------------------------------------------
+function award(pts){ const old=G.score; G.score+=pts; if(G.score>G.high){ G.high=G.score; localStorage.setItem('galaga_high',G.high); }
+  while(G.nextExtra<G.extraAt.length && G.score>=G.extraAt[G.nextExtra]){ G.lives++; sndExtra(); G.nextExtra++; } }
+
+// ---- update ---------------------------------------------------------------
+function update(){ G.t++; if(G.msgT>0)G.msgT--;
+  // explosions always tick
+  for(const ex of G.explosions){ if(++ex.timer>=7){ ex.timer=0; ex.frame++; } }
+  G.explosions=G.explosions.filter(e=>e.frame<EXPLO_FRAMES.length);
+
+  // bullets & shots (all states except attract)
+  if(G.state!=='attract'){
+    for(const b of G.bullets){ b.x+=b.vx; b.y+=b.vy; }
+    G.bullets=G.bullets.filter(b=>b.x>-4&&b.x<W+4&&b.y>-4&&b.y<H+4);
+    for(const s of G.shots){ s.x+=s.vx; s.y+=s.vy; }
+    G.shots=G.shots.filter(s=>s.y>-6);
+  }
+
+  if(G.state==='attract'){ demoUpdate(); return; }
+
+  // ---- READY respawn delay: freeze enemies/bullets, keep drawing ----
+  if(G.msgT>0){
+    const p=G.player;
+    if(p && !p.alive && G.lives<=0 && G.state!=='gameOver'){ startGameOver(); }
+    else if(p && !p.alive && G.lives>0){ p.x=p.x; /* ship waiting */ }
+    return;
+  }
+
+  // ---- normal gameplay ----
+  const p=G.player;
+  if(p && p.alive){
+    let mv=0; if(keys['ArrowLeft']||keys['a'])mv-=2.6; if(keys['ArrowRight']||keys['d'])mv+=2.6; p.x=clamp(p.x+mv,2,W-18);
+  }
+
+  // enemies
+  for(const e of G.enemies){
+    if(e.state==='entry'){ updateEntry(e); if(G.player&&G.player.alive && --e.fireT<=0){ enemyFire(e); e.fireT=(90)|0; } }
+    else if(e.state==='formation') updateFormation(e);
+    else if(e.state==='dive') updateDive(e);
+    else if(e.state==='reentry') updateReentry(e);
+    else if(e.state==='beam') updateBeam(e);
+    else if(e.state==='challenge'){ e.t+=e.speed; const pt=loopPath(clamp(e.t,0,1),e.cx); e.x=pt.x-8; e.y=pt.y-5; }
+  }
+
+  // dive scheduling (only during normal stage, never while READY)
+  if(G.state==='stage'){
+    G.diveTimer--;
+    const diving=G.enemies.filter(e=>e.state==='dive'||e.state==='beam').length;
+    const maxD=2+Math.min(4,G.stage);
+    if(G.diveTimer<=0 && diving<maxD){
+      const cand=G.enemies.filter(e=>e.state==='formation');
+      if(cand.length){ let e=cand[(Math.random()*cand.length)|0];
+        if(e.type==='boss'){ startDive(e,true); }
+        else { startDive(e,false);
+          // boss tractor-beam dive (occasionally, not the last ship)
+          const bosses=G.enemies.filter(b=>b.type==='boss'&&b.state==='formation');
+          if(bosses.length && Math.random()<0.28 && G.lives>1){ startCapture(bosses[(Math.random()*bosses.length)|0]); }
+        }
+      }
+      G.diveTimer=Math.max(35,95-G.stage*6);
+    }
+  }
+
+  // ---- collisions: player shots vs enemies ----
+  for(const s of G.shots){
+    if(s.dead) continue;
+    const sb={x:s.x-2,y:s.y-1,w:4,h:8};
+    for(const e of G.enemies){
+      if(e.state==='dead') continue;
+      if(aabb(sb,{x:e.x+1,y:e.y+1,w:e.type==='boss'?15:13,h:e.type==='zako'?9:12})){ s.dead=true; onShotHit(s,e); break; }
+    }
+  }
+  G.shots=G.shots.filter(s=>!s.dead);
+
+  // ---- collisions: enemy bullets & enemies vs player ----
+  const hs=playerHitboxes();
+  for(const b of G.bullets){ if(b.dead)continue; const bb={x:b.x-2,y:b.y-2,w:4,h:5};
+    for(const h of hs){ if(aabb(bb,h)){ b.dead=true; killPlayer(); break; } } }
+  G.bullets=G.bullets.filter(b=>!b.dead);
+
+  if(p&&p.alive){
+    for(const e of G.enemies){ if(e.state==='dead')continue; const eb={x:e.x+1,y:e.y+1,w:15,h:12};
+      for(const h of hs){ if(aabb(eb,h)){ killPlayer(); destroyEnemy(e); break; } } }
+  }
+
+  // cleanup dead enemies & stage completion
+  G.enemies=G.enemies.filter(e=>e.state!=='dead');
+  if(G.state==='challenge'){ const left=G.enemies.filter(e=>e.state==='challenge').length; if(left===0){ advanceChallenge(); } }
+  else if(G.state==='stage' && G.enemies.length===0) completeStage();
+
+  // stage-complete transition
+  if(G.state==='stageComplete'){ if(--G.stageCompleteT<=0) advanceStage(); }
+}
+
+function onShotHit(s,e){
+  const diving=(e.state==='dive'||e.state==='beam');
+  if(e.type==='boss'){ e.hits++; sndBossHit(); addExplosion(e.x+8,e.y+5); G.hits++;
+    if(e.captive){ // captive freed -> flies down to dock (if player alive)
+      const cap=e.captive; e.captive=null; G.captured=null; cap.freed=true; cap.vy=3.2; cap.dockTarget=G.player&&G.player.alive?{x:cap.x,y:PLAYER_Y}:{x:cap.x,y:H};
+      if(G.player&&G.player.alive) G.freeCaps.push(cap); else addExplosion(cap.x,cap.y); // dies with boss if player gone
+    }
+    if(e.hits>=2){ e.state='dead'; award(diving?bossDivingScore(e):150); sndDestroy(); addExplosion(e.x+8,e.y+5); }
+  } else { e.state='dead'; G.hits++; addExplosion(e.x+8,e.y+5);
+    if(G.state==='challenge'){ G.challengeHits++; award(100); }
+    else award(diving?e.type==='goei'?160:100 : (e.type==='goei'?80:50));
+    sndHitEnemy();
+  }
+}
+function bossDivingScore(e){ const escorts=G.enemies.filter(o=>o!==e&&o.type==='goei'&&o.state==='dive').length; return escorts>=2?1600:escorts===1?800:400; }
+
+// challenge waves & perfect bonus
+function advanceChallenge(){ G.waveCount++; if(G.challengeHits<8) G.perfect=false; const b=G.challengeHits>=8?1000:0; G.bonusTotal+=b; award(b);
+  if(G.waveCount>=5){ if(G.perfect){ award(10000); G.msg='PERFECT!'; G.msgT=140; } else { G.msg='CHALLENGING STAGE CLEAR'; G.msgT=120; }
+    const n=G.stage+1; setTimeout(()=>{ if(n===3||((n-3)%4===0)) spawnChallenge(); else startStage(n); }, 1400); G.state='stageComplete'; G.stageCompleteT=999999; // hold until timeout triggers advance
+    // simpler: schedule advance via stageCompleteT below
+  } else { spawnChallengeWave(G.waveCount); }
+}
+
+// ---- attract demo (auto-play) ---------------------------------------------
+function demoUpdate(){ if(!G.player){ G.player=newPlayer(W/2-8); } const p=G.player; if(p.alive){ // auto steer toward nearest enemy, fire
+    let best=null,bd=1e9; for(const e of G.enemies){ const d=Math.abs((e.x+8)-(p.x+8)); if(d<bd){bd=d;best=e;} } if(best){ p.x=clamp(p.x+(best.x-p.x)*0.05,2,W-18); }
+    if(G.shots.length<2 && (G.t%35===0)) playerFire(); }
+  for(const e of G.enemies){ if(e.state==='entry')updateEntry(e); else if(e.state==='formation'){ const s=e.slot; e.x=s.x-8+Math.sin(G.t*0.02)*(F*s.x); e.y=s.y+Math.sin(G.t*0.03)*4; } }
+  // occasional demo dives
+  if(G.t%180===0){ const cand=G.enemies.filter(e=>e.state==='formation'&&e.type!=='boss'); if(cand.length) startDive(cand[0],false); }
+  for(const e of G.enemies){ if(e.state==='dive')updateDive(e); }
+}
+
+// ---- game over / hit results ----------------------------------------------
+function startGameOver(){ G.state='gameOver'; G.gameOverAt=G.t; G.msg='GAME OVER'; G.msgT=140; }
+
+// ---- rendering ------------------------------------------------------------
+const cv=document.getElementById('game'); const ctx=cv.getContext('2d'); ctx.imageSmoothingEnabled=false;
+
+function drawStars(){ ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H); for(const s of STARS){ s.y+=s.spd; if(s.y>H){s.y=0;s.x=Math.random()*W;} const tw=0.5+0.5*Math.sin((G.t+s.tw*100)*0.08); ctx.globalAlpha=tw; ctx.fillStyle=s.col; ctx.fillRect(s.x|0,s.y|0,1,1);} ctx.globalAlpha=1; }
+
+function drawHUD(){ ctx.font='7px monospace'; ctx.textBaseline='top';
+  ctx.fillStyle='#ff4a3c'; ctx.fillText('1UP',6,4); ctx.fillStyle='#fff'; ctx.fillText(String(G.score),6,12);
+  ctx.fillStyle='#ff4a3c'; ctx.fillText('HIGH SCORE',(W-70)/2,4); ctx.fillStyle='#fff'; ctx.fillText(String(G.high),(W-70)/2+ (String(G.high).length? 0:0)+0,12); // right align below
+  ctx.textAlign='right'; ctx.fillStyle='#fff'; ctx.fillText(String(G.high),W-6,12); ctx.textAlign='left';
+  // reserve ships bottom-left
+  for(let i=0;i<Math.max(0,G.lives-1);i++){ drawSprite(ctx,SHIP,8+i*20,H-14,false); }
+  // stage badges bottom-right (arcade denominations)
+  let n=G.stage; const denoms=[50,30,20,10,5,1]; let used=0; for(const d of denoms){ while(n>=d && used<6){ drawFlag(W-8-used*14,H-16,d); n-=d; used++; } if(used===0&&G.stage>0) break; }
+  if(G.stage>=1 && used===0){ drawFlag(W-8,H-16,1); } // stage badge for stages <5 handled by loop (1) 
+}
+function drawFlag(x,y,d){ const col=d===1?'#ff4a3c':d===5?'#2f7bff':d===10?'#20d020':d===20?'#ffe600':d===30?'#9a5cff':'#ffffff'; ctx.fillStyle=col; ctx.fillRect(x,y,10,8); ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.strokeRect(x+0.5,y+0.5,9,7);
+  ctx.fillStyle='#000'; ctx.font='6px monospace'; ctx.textAlign='center'; ctx.fillText(d===50?'50':String(d),x+5,y+1); ctx.textAlign='left'; }
+
+function drawShip(x){ // red when captured handled elsewhere; normal white fighter
+  ctx.fillStyle='#ffffff'; const rows=["..w..",".www.","wwwww"]; for(let j=0;j<3;j++)for(let i=0;i<5;i++){const c=rows[j][i];if(c==='w')ctx.fillRect(x+2+i,PLAYER_Y+j,1,1);} ctx.fillStyle='#2f7bff'; ctx.fillRect(x+6,PLAYER_Y+3,4,2); }
+function drawDual(){ const p=G.player; if(!p||!p.alive)return; drawShip(p.x); drawShip(p.x+24); }
+
+function drawEnemy(e){ let img=ZAKO,col=null; if(e.type==='goei')img=GOEI; else if(e.type==='boss'){ img=BOSS; col=(e.hits>0)?'#9a5cff':null; }
+  const flap=((G.t>>3)&1)===0; drawSprite(ctx,img,e.x,e.y,flap);
+  if(col){ // recolour boss pixels after first hit
+    ctx.save(); ctx.globalCompositeOperation='source-atop'; ctx.fillStyle=col; ctx.fillRect(e.x,e.y,img.w,img.h); ctx.restore(); }
+}
+function drawCaptive(cap){ const flap=((G.t>>3)&1)===0; ctx.save(); ctx.globalAlpha=cap.beam?0.9:1; // red captured fighter
+  const rows=["..r..",".rrr.","rrrrr"]; for(let j=0;j<3;j++)for(let i=0;i<5;i++){const c=rows[j][i];if(c==='r'){ctx.fillStyle='#ff4a3c';ctx.fillRect(cap.x+2+i,cap.y+j,1,1);}} ctx.restore(); }
+
+function drawBeam(e){ const dur=e.beamDur; for(let y=e.y+8;y<H;y+=1){ const f=(y-(e.y+8))/dur; const halfW=4+f*36; ctx.fillStyle='rgba(60,120,255,'+(0.28+0.1*Math.sin((G.t+y)*0.3))+')'; ctx.fillRect((e.x+8-halfW)|0,y,Math.max(1,(halfW*2)|0),1); } }
+
+function drawShots(){ for(const s of G.shots){ ctx.fillStyle='#ffe600'; ctx.fillRect(s.x,s.y,2,7); ctx.fillStyle='#fff'; ctx.fillRect(s.x+0.5,s.y,1,3);} }
+function drawBullets(){ for(const b of G.bullets){ ctx.fillStyle='#ffffff'; ctx.fillRect(b.x-2,b.y-1,4,2); ctx.fillStyle='#ff4a3c'; ctx.fillRect(b.x-1,b.y-2,2,5);} }
+
+function drawPlayer(){ const p=G.player; if(!p||!p.alive)return; if(G.dual){ drawDual(); } else { drawShip(p.x); } }
+
+function render(){
+  drawStars();
+  if(G.state==='attract'){ for(const e of G.enemies)drawEnemy(e); if(G.captured)drawCaptive(G.captured); drawPlayer(); drawShots(); drawBullets(); for(const ex of G.explosions)drawExplosion(ctx,ex); drawTitle(); return; }
+  // stage badges & HUD
+  drawHUD();
+  // beam behind enemies
+  for(const e of G.enemies) if(e.state==='beam') drawBeam(e);
+  for(const e of G.enemies){ if(e.state!=='dead') drawEnemy(e); }
+  if(G.captured) drawCaptive(G.captured);
+  for(const cap of (G.freeCaps||[])){ cap.y+=cap.vy; if(cap.y>=PLAYER_Y){ // dock -> dual fighter
+      const p=G.player; if(p&&p.alive){ G.dual=true; sndDock(); } cap.done=true; } else drawCaptive(cap); }
+  if(G.freeCaps) G.freeCaps=G.freeCaps.filter(c=>!c.done);
+  drawShots(); drawBullets(); drawPlayer();
+  for(const ex of G.explosions) drawExplosion(ctx,ex);
+  // messages
+  if(G.msgT>0){ ctx.textAlign='center'; ctx.font='10px monospace'; ctx.fillStyle='#ffe600'; ctx.fillText(G.msg,W/2,H-70); ctx.textAlign='left'; }
+}
+
+// ---- attract title --------------------------------------------------------
+function drawTitle(){
+  ctx.textAlign='center'; ctx.fillStyle='#ff4a3c'; ctx.font='bold 28px monospace'; ctx.fillText('GALAGA',W/2,54);
+  ctx.fillStyle='#fff'; ctx.font='7px monospace'; ctx.fillText('CHALLENGING STAGE',W/2,70);
+  // score table (arcade values)
+  const rows=[['ZAKO','50','100'],['GOEI','80','160'],['BOSS','150','400-1600']]; let y=96; ctx.textAlign='left';
+  for(const r of rows){ ctx.fillStyle='#fff'; ctx.fillText(r[0],40,y); ctx.fillStyle='#ffe600'; ctx.fillText(r[1],120,y); ctx.fillText(r[2],150,y); y+=16; }
+  ctx.textAlign='center'; ctx.fillStyle=((G.t>>4)&1)?'#fff':'#ff4a3c'; ctx.font='9px monospace'; ctx.fillText('PRESS ENTER TO START',W/2,H-46);
+  ctx.fillStyle='#8fd0ff'; ctx.font='7px monospace'; ctx.fillText('ARROWS/A-D MOVE   SPACE FIRE   P PAUSE   M MUTE',W/2,H-30);
+  ctx.textAlign='left';
+}
+
+// ---- input ---------------------------------------------------------------
+const keys={};
+addEventListener('keydown',e=>{ initAudio(); if(e.key==='Enter') e.preventDefault(); if(['ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+  const k=e.key; keys[k]=true; keys[e.code]=true;
+  if(k==='m'||k==='M'){ muted=!muted; }
+  if(k==='p'||k==='P'){ G.pause=!G.pause; }
+  if(k==='Enter' && (G.state==='attract'||G.state==='gameOver')){ startGame(); }
+});
+addEventListener('keyup',e=>{ keys[e.key]=false; keys[e.code]=false; });
+
+function startGame(){ G.score=0; G.lives=3; G.nextExtra=0; G.shotsFired=0; G.hits=0; G.bonusTotal=0; G.perfect=true; G.player=newPlayer(W/2-8); G.freeCaps=[]; G.explosions=[]; jingle(); startStage(1); }
+
+// ---- fixed-timestep loop --------------------------------------------------
+let last=performance.now(), acc=0;
+function frame(now){ requestAnimationFrame(frame); let dt=now-last; last=now; if(dt>250)dt=250; acc+=dt;
+  while(acc>=STEP){ if(!G.pause) update(); acc-=STEP; } render(); }
+// boot attract demo
+(function boot(){ G.player=newPlayer(W/2-8); const layout=makeFormation(); for(let i=0;i<layout.length;i++){const e=layout[i];e.state='entry';e.t=Math.max(0,(i-1)*0.05);e.speed=0.02+Math.min(i,30)*0.0003;e.dir=i%2?1:-1;} G.enemies=layout; })();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

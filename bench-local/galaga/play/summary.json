@@ -454,5 +454,323 @@
   "passed": 8,
   "errors": [],
   "n_errors": 0
+ },
+ "5090-iq3_xxs-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_xxs-medium-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": false,
+  "alive_at_end": false,
+  "passed": 5,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 6.5,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.5,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.5,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.5,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 6.6,
+    "text": "Cannot read properties of undefined (reading '0')"
+   }
+  ],
+  "n_errors": 18062
+ },
+ "5090-iq3_xxs-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_xxs-medium32k-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Unexpected token ')'"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_xxs-off-s1": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": false,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.0,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 3.1,
+    "text": "Cannot read properties of undefined (reading 'x')"
+   }
+  ],
+  "n_errors": 192
+ },
+ "5090-iq3_xxs-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 8.6,
+    "text": "Cannot read properties of null (reading 'dual')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_xxs-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_xxs-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
  }
 }

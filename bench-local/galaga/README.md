@@ -184,6 +184,72 @@ Bold = playable (plays well or playable with flaws).
 The rubric ranked these four almost in reverse of hand play, as it did for the Flash-Next games: it scores features
 present, not how the game looks or feels. Hand play agrees with each review's *bugs*, not with its *total*.
 
+## Second machine: RTX 5090 / Ryzen 9 9950X3D / 64 GB DDR5, engine 0.1.51 (2026-10-25)
+
+The same 8 IQ3_XXS runs (off, medium 16K, medium 32K, xhigh 32K; seeds 1 and 2; same prompt, sampling and caps),
+sent to the server the app was already running (`gen.py --use-running --prefix 5090-`), so the runs are named
+`5090-iq3_xxs-*`. Machine and server:
+
+| | |
+| --- | --- |
+| GPU | NVIDIA GeForce RTX 5090, 32 GB, driver 617.42 |
+| CPU / RAM | AMD Ryzen 9 9950X3D (16 cores), 64 GB DDR5 (63.4 GiB usable) |
+| Engine | **0.1.51** (the 4090 runs: 0.1.36), MTP drafting, `--prefill auto` (cap 8192) |
+| Model | Qwen3.8-Flash-Next GSQ-RCO IQ3_XXS, the same files |
+| Context | **131,072** (the 4090 runs: 262,144), KV int8, KV streaming (`--kv-resident 32768`) |
+| Expert cache | **13,699 slots / 22.3 GB** (4090: 9,859 / 16.0 GB), 58 MiB VRAM free, 40 GB arena in RAM, 15 pool workers |
+| Vision | on (the app's default; it costs 700 MiB of VRAM) |
+
+Play-tested, contact-sheeted and blind-reviewed the same way (letters Z and AB-AJ; `blind.py` now keeps the old
+letters and only shuffles new games). The reviewers were a different model generation from the 4090 round
+(Claude Fable 5.1 against Claude Opus 5.5), which matters for the verdict column, see below.
+
+| run | score /76 | play checks /8 | severe bugs | verdict | out tokens | time | tok/s | html lines |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| off s1 | 22 | 6 | 7 | not playable (no enemies: the stage builder never stores them; Space does not fire) | 9,353 | 0.7 min | 239 | 407 |
+| off s2 | 35 | 6 | 6 | not playable (formation `y` never set; first death freezes the loop; drawn at 1x in a corner) | 10,156 | 0.7 min | 257 | 255 |
+| medium 16K s1 | 51 | 8 | 3 | barely playable (stage 1 can never be cleared; aimed fire from entering enemies) | 26,824 | 1.8 min | 244 | 667 |
+| medium 16K s2 | 21 | 5 | 1 | not playable (TypeError on the first frame: bezier helper fed an object, not an array) | 29,772 | 2.1 min | 238 | 1,041 |
+| medium 32K s1 | **70** | 8 | 1 | barely playable (every formation enemy fires on its own timer: ~8 bullets/s rain) | 49,899 | 3.5 min | 241 | 1,872 |
+| medium 32K s2 | 60 | 2 | 2 | not playable (syntax error: an extra `)` in the slot builder; page stays black) | 30,362 | 2.1 min | 239 | 833 |
+| xhigh 32K s1 | 61 | 8 | 1 | barely playable (formation positions are NaN: enemies only show mid-dive) | 53,649 | 3.6 min | 248 | 2,096 |
+| xhigh 32K s2 | **67** | 8 | 2 | barely playable (challenging stage soft-locks after wave 1; aimed fire at every stage start) | 53,666 | 3.8 min | 239 | 2,080 |
+
+Against the 4090 round of the same 8 runs:
+
+| | 4090, engine 0.1.36 | 5090, engine 0.1.51 |
+| --- | --- | --- |
+| mean score /76 | 49.4 | 48.4 |
+| best run | 72 (xhigh 32K s2) | 70 (medium 32K s1) |
+| plays well / playable with flaws | 4 of 8 | **0 of 8** |
+| barely playable | 0 of 8 | 4 of 8 |
+| crashed at load or on start (syntax error, exception, loop) | 3 of 8 | 3 of 8 (one syntax error, two first-frame exceptions) |
+| passed all 8 play checks | 5 of 8 | 4 of 8 |
+| decode, whole request | 115-185 tok/s | **238-257 tok/s** |
+| time per 32K-thinking game | 5.8-7.3 min | **2.1-3.8 min** |
+| time for the 8 runs | ~40 min | **18 min** |
+
+- **Speed is the clear result: 2x.** Every run decodes at 238-257 tok/s over the whole request, against 115-127
+  tok/s on the 4090 for the thinking runs; the MTP draft acceptance is 78% (33,001 of 42,285 drafts on xhigh s1) with a
+  98% expert-cache hit rate. The 5090's larger cache holds 13,699 of the 24,576 experts (56%) against 40% on the
+  4090, so far less goes over PCIe (`pcie_share` 0.002). A 32K-thinking game costs 3.5 min instead of 6-7.
+- **Quality looks the same, with the same failure shapes.** The mean is within a point (48.4 vs 49.4), the best game
+  within 2 points, and 3 of 8 still fail before gameplay. The bug list is the familiar one: an unassigned field, a
+  helper called with the wrong argument type, one extra bracket, a challenging stage that never ends. Thinking budget is
+  again the lever: off 22 / 35, 16K 51 / 21, 32K 70 / 60 / 61 / 67. All 32K runs used the whole budget.
+- **The verdict column is not comparable across rounds.** The 4090 games were scored "playable with flaws" by Opus
+  5.5 reviewers; this round's Fable 5.1 reviewers gave the equivalent games (70, 67, 61 points, 8/8 play checks, 1-2
+  severe bugs) "barely playable", mostly for aimed enemy fire during entry and formation bullet rain that kill the bot
+  within 30 s. The 4090 reviews never raised fire density as a reason for a verdict, and whether those games shoot as
+  much was not checked, so the 4-of-8 to 0-of-8 drop may be reviewer calibration as much as the games. Hand play has
+  to settle it, as in the earlier rounds. The 32K games are the ones to play: `out/5090-iq3_xxs-medium32k-s1.html`,
+  `out/5090-iq3_xxs-xhigh32k-s2.html`, `out/5090-iq3_xxs-xhigh32k-s1.html`.
+- **Not controlled:** engine version (0.1.36 to 0.1.51), context (262K to 131K), vision on, and the seed does not
+  reproduce across engine versions, so each run is a fresh sample. With 2 runs per arm this round cannot separate a
+  quality change from sampling noise; it shows the quality band did not move while the speed doubled.
+- The two `off` games are the shortest of the whole test (255 and 407 lines): without thinking, the model writes a
+  skeleton that touches every feature and runs almost none of it.
+
 ## What this does and does not show
 
 - **One-shot, this task is mostly failed by every quant: 2 playable games out of 12.** 7 of 12 never reach gameplay:
@@ -220,6 +286,7 @@ present, not how the game looks or feels. Hand play agrees with each review's *b
 
 ```bash
 ../../.venv/Scripts/python.exe gen.py                       # ~70 min: 3 server starts, 12 generations
+../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants IQ3_XXS --arms off,medium,medium32k,xhigh32k  # against a running server
 python -m venv pw && pw/Scripts/pip install playwright pillow
 pw/Scripts/python.exe playtest.py && pw/Scripts/python.exe sheet.py
 python stats.py && python blind.py                          # then review each review/<letter>/ against rubric.md

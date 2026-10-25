@@ -23,5 +23,13 @@
  "V": "qwen3.8-27b-xhigh32k-s1",
  "W": "qwen3.8-27b-xhigh32k-s2",
  "X": "qwen3.8-27b-medium-s2",
- "Y": "qwen3.8-27b-off-s1"
+ "Y": "qwen3.8-27b-off-s1",
+ "Z": "5090-iq3_xxs-off-s2",
+ "AB": "5090-iq3_xxs-xhigh32k-s1",
+ "AD": "5090-iq3_xxs-xhigh32k-s2",
+ "AE": "5090-iq3_xxs-medium-s2",
+ "AF": "5090-iq3_xxs-off-s1",
+ "AG": "5090-iq3_xxs-medium32k-s2",
+ "AI": "5090-iq3_xxs-medium-s1",
+ "AJ": "5090-iq3_xxs-medium32k-s1"
 }

@@ -10,17 +10,19 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 OUT, PLAY, REV = HERE / "out", HERE / "play", HERE / "review"
 
-names = sorted(p.stem for p in OUT.glob("*.html"))
-random.Random(20261002).shuffle(names)
+KEY = HERE / "review-key.json"
+# games already lettered keep their letters; new games get the next ones (Z, then AA, AB, ...) in a shuffled order
+key = json.loads(KEY.read_text(encoding="utf-8")) if KEY.exists() else {}
+names = sorted(p.stem for p in OUT.glob("*.html") if p.stem not in key.values())
+random.Random(20261002 + len(key)).shuffle(names)
 REV.mkdir(exist_ok=True)
-key = {}
-for i, name in enumerate(names):
-    letter = chr(ord("A") + i)
+for i, name in enumerate(names, start=len(key)):
+    letter = chr(ord("A") + i) if i < 26 else "A" + chr(ord("A") + i - 26)
     d = REV / letter
     d.mkdir(exist_ok=True)
     shutil.copy(OUT / f"{name}.html", d / "galaga.html")
     for f in (PLAY / name).glob("*"):
         shutil.copy(f, d / f.name)
     key[letter] = name
-(HERE / "review-key.json").write_text(json.dumps(key, indent=1), encoding="utf-8")
+KEY.write_text(json.dumps(key, indent=1), encoding="utf-8")
 print(" ".join(sorted(key)))

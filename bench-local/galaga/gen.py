@@ -2,6 +2,10 @@
 """Galaga coding test: ask each installed Strata quant to write prompt.md's game, one server start per quant.
 
 usage: gen.py [--quants IQ3_XXS,IQ3_S,unsloth-ud-q4_k_xl] [--arms off,medium] [--seeds 1,2]
+              [--use-running] [--prefix 5090-]
+
+--use-running sends to whatever already serves on the port (one quant only) instead of starting servers;
+--prefix names the runs <prefix><quant>-<arm>-s<seed>, so a second machine's games sit next to the first's.
 
 Writes out/<quant>-<arm>-s<seed>.json (the request, the full response, timings from /metrics) and
 out/<quant>-<arm>-s<seed>.html (the first ```html block of the answer, or the whole answer if it has none).
@@ -65,8 +69,8 @@ def extract_html(text):
     return text, "raw"
 
 
-def run_one(quant, arm, seed):
-    tag = f"{quant.lower()}-{arm}-s{seed}"
+def run_one(quant, arm, seed, prefix=""):
+    tag = f"{prefix}{quant.lower()}-{arm}-s{seed}"
     jpath = OUT / f"{tag}.json"
     if jpath.exists():
         print(f"  {tag}: done already, skipped", flush=True)
@@ -100,21 +104,33 @@ def main():
     ap.add_argument("--quants", default="IQ3_XXS,IQ3_S,unsloth-ud-q4_k_xl")
     ap.add_argument("--arms", default="off,medium")
     ap.add_argument("--seeds", default="1,2")
+    ap.add_argument("--use-running", action="store_true")
+    ap.add_argument("--prefix", default="")
     a = ap.parse_args()
     OUT.mkdir(exist_ok=True)
-    if serve_strata.healthy(PORT):
+    if a.use_running:
+        if not serve_strata.healthy(PORT):
+            raise SystemExit(f"nothing answers on {PORT}")
+        _, engine = metrics_row()
+        print(f"using the running server: {engine.get('model')}, engine {engine.get('engine')}, "
+              f"context {engine.get('context')}, {engine.get('expert_slots')} expert slots", flush=True)
+    elif serve_strata.healthy(PORT):
         raise SystemExit(f"something already answers on {PORT}; stop it first")
     for quant in a.quants.split(","):
         todo = [(arm, int(s)) for arm in a.arms.split(",") for s in a.seeds.split(",")
-                if not (OUT / f"{quant.lower()}-{arm}-s{s}.json").exists()]
+                if not (OUT / f"{a.prefix}{quant.lower()}-{arm}-s{s}.json").exists()]
         if not todo:
             print(f"{quant}: all runs done", flush=True)
+            continue
+        if a.use_running:
+            for arm, seed in todo:
+                run_one(quant, arm, seed, a.prefix)
             continue
         print(f"{quant}: starting server", flush=True)
         proc = serve_strata.start(quant, PORT)
         try:
             for arm, seed in todo:
-                run_one(quant, arm, seed)
+                run_one(quant, arm, seed, a.prefix)
         finally:
             serve_strata.stop(proc, PORT)
 

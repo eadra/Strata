@@ -146,7 +146,9 @@ def test(page, html, shots):
 def main():
     pat = sys.argv[1] if len(sys.argv) > 1 else "*.html"
     PLAY.mkdir(exist_ok=True)
-    summary = {}
+    # merge into the existing summary, so a partial rerun (a glob) keeps the other games' results
+    sp = PLAY / "summary.json"
+    summary = json.loads(sp.read_text(encoding="utf-8")) if sp.exists() else {}
     with sync_playwright() as p:
         browser = p.chromium.launch(channel="chrome", headless=True, args=["--autoplay-policy=no-user-gesture-required"])
         for html in sorted(OUT.glob(pat)):
@@ -165,7 +167,7 @@ def main():
                   " ".join(k for k, v in r.items() if v is False) + (f"  errors: {r.get('n_errors')}"
                   if r.get("n_errors") else ""), flush=True)
         browser.close()
-    (PLAY / "summary.json").write_text(json.dumps(summary, indent=1), encoding="utf-8")
+    sp.write_text(json.dumps(summary, indent=1), encoding="utf-8")
 
 
 if __name__ == "__main__":

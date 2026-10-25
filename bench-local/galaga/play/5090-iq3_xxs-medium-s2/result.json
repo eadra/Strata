@@ -1,0 +1,114 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": false,
+ "survives_play": false,
+ "alive_at_end": false,
+ "passed": 5,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 6.5,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.5,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.5,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.5,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 6.6,
+   "text": "Cannot read properties of undefined (reading '0')"
+  }
+ ],
+ "n_errors": 18062
+}
