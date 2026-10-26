@@ -373,8 +373,21 @@ whether an expert comes from RAM or the SSD); the times are not.
 - **Not comparable with the 4090 UD-Q4 round** (1 of 4 playable, best 71): different reviewers, 4 runs, all experts in
   RAM there, and the seeds do not reproduce across engine versions.
 
-Games to hand-play: `out/5090-unsloth-ud-q4_k_xl-medium-s1.html` (70, no severe bug), `out/5090-unsloth-ud-q4_k_xl-xhigh32k-s1.html`
-(65) and `out/5090-unsloth-ud-q4_k_xl-xhigh32k-s2.html` (60).
+**Hand play (user, 2026-10-25):**
+
+| game | rubric | hand play |
+| --- | ---: | --- |
+| medium 16K s1 (AQ) | 70, no severe bug | **Rivals the Sonnet 5.5 game: one of the closest to real Galaga so far, tying Sonnet on similarity.** One bug: after a capture, the respawned fighter appears where the captured one was and dies at once. |
+| xhigh 32K s1 (AP) | 65 | Kind of playable, but the movement is odd and it did not really work. |
+| xhigh 32K s2 (AU) | 60 | Not playable at all. |
+
+The capture bug the reviewer missed, confirmed in the code: the capture pull moves the fighter's `y` up to the Boss
+(lines 775-776), and `respawnCheck` resets only `x` (line 498: `p.alive=true;p.x=112;...`), so the new fighter spawns at
+the Boss's altitude inside the formation and is rammed as soon as its 90 frames of invulnerability end. A one-line fix
+(`p.y=252` there). Hand play ranks the three the same way the rubric did this time (70 > 65 > 60), but with a far bigger
+gap than 10 points: one game is close to the arcade, the other two are not, which the rubric's additive score does not
+show. For the first time a Strata game is put level with the Sonnet 5.5 game on faithfulness, by a 4-bit quant with a
+16K thinking budget.
 
 ## What this does and does not show
 
