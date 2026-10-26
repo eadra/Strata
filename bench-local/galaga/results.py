@@ -25,7 +25,7 @@ print(f"{'run':30} {'L'} {'score':>5} {'play':>4} {'sev':>3} {'tok':>6} {'min':>
 for r in rows:
     print(f"{r['run']:30} {r['letter']} {r['total']:>5} {r['play_checks']:>4} {r['severe_bugs']:>3} "
           f"{r['out_tokens']:>6} {r['wall_min']:>5} {r['tok_s']:>6}  {r['verdict']}  {r['groups']}")
-for q in ("iq3_xxs", "iq3_s", "unsloth-ud-q4_k_xl", "qwen3.8-27b", "5090-iq3_xxs"):
+for q in ("iq3_xxs", "iq3_s", "unsloth-ud-q4_k_xl", "qwen3.8-27b", "5090-iq3_xxs", "5090-iq3_s", "5090-unsloth-ud-q4_k_xl"):
     rs = [r for r in rows if r["run"].startswith(q + "-")]
     print(q, "mean", round(mean(r["total"] for r in rs), 1), "playable", sum(r["verdict"] in ("plays well",
           "playable with flaws") for r in rs), "of", len(rs))

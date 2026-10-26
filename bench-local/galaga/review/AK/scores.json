@@ -1,0 +1,217 @@
+{
+ "letter": "AK",
+ "items": {
+  "A1": {
+   "score": 2,
+   "evidence": "Single self-contained file, no external resources (lines 1-777); all sprites are pixel data (70-104), audio synthesized (106-164). Dead leftover code exists (updateBullets 339-343 with a 'placeholder removed below' comment, never called) but nothing is truncated or stubbed."
+  },
+  "A2": {
+   "score": 0,
+   "evidence": "Play-test: loads_clean=false, starts=false, animates_idle=false; pageerror 'Assignment to constant variable' at t=0. Cause: line 167 declares `const keys={},pressed={}` and update() reassigns `pressed={}` at lines 302 and 315 under 'use strict' (15). The first update step throws inside frame() (767), so draw() (769) and requestAnimationFrame (770) are never reached again: the game freezes on the title screen forever (all screenshots identical)."
+  },
+  "A3": {
+   "score": 2,
+   "evidence": "Fixed-step accumulator loop on requestAnimationFrame, STEP=1/60, delta clamped to 0.25 s (763-774). Correctly written; it simply dies after the first update step because of the A2 crash."
+  },
+  "A4": {
+   "score": 1,
+   "evidence": "Clear sections (16-21), state object G (177-186), update (297-630) and render (632-760) separated with readable names. Marked down for junk: no-op `G.hits===G.hits` (336), uncalled updateBullets with a nonsense integrator (339-343), `e.ch&&false` (374), `G.ftime+=0` (768), and a setInterval hack to drive the title blink (773)."
+  },
+  "B1": {
+   "score": 2,
+   "evidence": "224x288 canvas (13), integer scale factor fitting the window (27-31), crisp pixels (9), centred on black via flex (7-8). Confirmed by screenshots."
+  },
+  "B2": {
+   "score": 1,
+   "evidence": "70 stars with 5 colours, scroll speed and twinkle phase (187-190); updateStars (196-199) scrolls, drawStars (633-639) twinkles via alpha. Stars are visible in the screenshots but never move or twinkle because the loop dies on the first update (A2); updateStars ran exactly once (298) before the throw at 315 and nothing was redrawn."
+  },
+  "B3": {
+   "score": 0,
+   "evidence": "drawHUD (640-657) has 1UP, HIGH SCORE, reserve ships and badges, but it is only called in non-title states (727-750). The state never leaves 'title' because update() throws at 315 on every frame, so the HUD is never drawn in the play-test."
+  },
+  "B4": {
+   "score": 2,
+   "evidence": "drawTitle (710-720): title, score table with the three enemy sprites, PRESS ENTER TO START, high score, controls. Drawn on the first frame and visible in 1-title.png. (The blink at 717 never animates because there is no second draw.)"
+  },
+  "B5": {
+   "score": 0,
+   "evidence": "'STAGE N' / 'CHALLENGING STAGE' (728-729), 'STAGE N CLEAR' (743), 'GAME OVER' (747), results then title (312-313) exist, but no state transition ever happens: update() throws at 315 every frame; starts=false in the play-test."
+  },
+  "B6": {
+   "score": 1,
+   "evidence": "High score loaded from localStorage at 179 and shown on the title (718). saveHigh (193) is only called from the gameover state (312), which is unreachable (A2), so it is never written."
+  },
+  "C1": {
+   "score": 0,
+   "evidence": "Movement 360-361, fire 363, Enter 306, pause 301/304, A/D 360 are all written correctly, but updatePlay is never reached: update() throws at 315 (and at 302 when paused) before any state change takes effect on screen; moves=false in the play-test."
+  },
+  "C2": {
+   "score": 0,
+   "evidence": "`G.shots.length<2` at 363 (and a dual fighter fires two at once at 334, so three could exist), but firing is unreachable (A2)."
+  },
+  "C3": {
+   "score": 0,
+   "evidence": "reserves 2 + 1 in play (180/224), nextExtra 20000 then +70000 (323): correct values, never executed (A2)."
+  },
+  "C4": {
+   "score": 0,
+   "evidence": "Results screen with fired, hits, ratio % (749-756) exists but the 'results' state is unreachable (A2)."
+  },
+  "D1": {
+   "score": 0,
+   "evidence": "Three distinct 2-frame sprites (76-90) and frame toggle at 485; in play they are drawn only via drawEnemy (665-673, 701), which is never reached; only the static title sprites (713-715) ever appear. Game never starts (A2)."
+  },
+  "D2": {
+   "score": 0,
+   "evidence": "Broken even ignoring the crash: killEnemy sets e.state='dead' at 563 and then tests e.state==='dive'||'beam' at 568/570/571, which is always false, so diving Zako/Goei/Boss would always score 50/80/150 and the 400/800/1600 escort table never applies. And none of it runs (A2)."
+  },
+  "D3": {
+   "score": 0,
+   "evidence": "hp 2 for bosses (220), damaged palette when hp<2 (90, 671), bossHit sound (378): never executed (A2)."
+  },
+  "D4": {
+   "score": 0,
+   "evidence": "playInit builds 4 bosses, 2x8 Goei, 2x10 Zako (233-237): correct layout, never called because the 'intro' state is unreachable (307)."
+  },
+  "D5": {
+   "score": 0,
+   "evidence": "Catmull-Rom entry paths in 5 groups (248-270, 257-267, 493-498): never executed (A2)."
+  },
+  "D6": {
+   "score": 0,
+   "evidence": "Sway (206-209) and breathing (202-205; x only) in slotPos (210-215): never executed (A2)."
+  },
+  "D7": {
+   "score": 0,
+   "evidence": "Dives toward the player with fire (478-481, 510-512) and re-entry from the top to the slot (506-508): never executed (A2)."
+  },
+  "D8": {
+   "score": 0,
+   "evidence": "Boss escorts (467-471, 513-514) and stage scaling of dive timer/duration (423, 481): never executed. Also latent: escorts are only positioned while the boss is in 'dive'; when the boss goes to 'return' or 'beam' they stay in state 'escort' frozen, often below the screen (y=H+34/46 at 514), unkillable and unable to return, so a stage may never clear."
+  },
+  "D9": {
+   "score": 0,
+   "evidence": "Enemy bullet vs player (389-399) and ram kills both (404-419): never executed (A2)."
+  },
+  "E1": {
+   "score": 0,
+   "evidence": "Boss beam dive to y=150 (472-476), beam state (505, 527-539), widening animated cone (674-684): never executed (A2). Latent: at 534 a muted game (beamNodes null) ends the beam after 0.1 s."
+  },
+  "E2": {
+   "score": 0,
+   "evidence": "Capture pull with smoothstep (351-357), captive held above the boss (356, 500), ship lost (356->326): never executed (A2). Latent: the ship is drawn with the normal palette while pulled (706->662), red only once held (696)."
+  },
+  "E3": {
+   "score": 0,
+   "evidence": "Rescue can never trigger even if the game ran: killEnemy marks e.state='dead' at 563 before checking `e.state==='dive'||e.state==='beam'` at 581, so the captive always takes the 'destroyed' branch (585-588). The 'freed' state and docking (541-552, 583-584) are dead code."
+  },
+  "E4": {
+   "score": 0,
+   "evidence": "P.dual is only set true at 549 inside the unreachable 'freed' state (see E3). Dual movement/fire/half-loss code (334, 390-394, 405-413, 662) can never trigger."
+  },
+  "E5": {
+   "score": 0,
+   "evidence": "Captive destroyed with the boss in formation (585-588) is the only branch that would ever run, but nothing runs (A2)."
+  },
+  "E6": {
+   "score": 0,
+   "evidence": "Captive fires while the boss dives (515-517, 451-457), but the bullet's vx (456) is ignored by the bullet update (387), so it would drop straight down; and none of it runs (A2)."
+  },
+  "F1": {
+   "score": 0,
+   "evidence": "Stage clear -> stage++ -> intro (433, 311): never executed (A2)."
+  },
+  "F2": {
+   "score": 0,
+   "evidence": "isCh n%4===3 (192), 5 waves of 8 (285-294, 619), looping paths (278-284), no fire (497), exit and vanish (495): never executed (A2)."
+  },
+  "F3": {
+   "score": 0,
+   "evidence": "100/hit (572), 1000/wave (613), 10000 PERFECT (621), NUMBER OF HITS screen (733-740): never executed (A2)."
+  },
+  "F4": {
+   "score": 0,
+   "evidence": "Badges in 50/30/20/10/5/1 (648-657) inside drawHUD, never drawn (B3)."
+  },
+  "G1": {
+   "score": 0,
+   "evidence": "All seven required sounds plus capture/dock/extra exist (135-164), but no sfx call is ever reached: every caller sits in update paths that never run (A2). initAudio alone (169) makes no sound."
+  },
+  "G2": {
+   "score": 1,
+   "evidence": "AudioContext is created on the first keydown (168-169), which works independently of the dead loop. M toggles mute at 299 inside update(), which throws every frame; the toggle runs before the throw on the frame the key is seen, but the MUTE indicator (759) is never redrawn and no sound ever plays, so it is effectively inert."
+  },
+  "H1": {
+   "score": 0,
+   "evidence": "Hitboxes (375, 392, 411) are at or inside sprite sizes, but collision never runs (A2)."
+  },
+  "H2": {
+   "score": 0,
+   "evidence": "3-frame small and big explosion sprites (92-103), drawBooms (685-691): never executed (A2)."
+  },
+  "H3": {
+   "score": 0,
+   "evidence": "Respawn 2.2 s (327, 365), READY text (708), dive scheduler gated on resp/cap (422): never executed (A2)."
+  }
+ },
+ "total": 12,
+ "bugs": [
+  {
+   "severity": "severe",
+   "lines": "167, 302, 315",
+   "text": "`pressed` is declared const (167) and reassigned (`pressed={}`) at 302 and 315 under 'use strict'. The first update() step throws TypeError 'Assignment to constant variable'; frame() (765-771) never reaches draw() or the next requestAnimationFrame, so the game freezes on the title screen. Enter, movement, sound: nothing works. Confirmed by result.json (pageerror at t=0, starts=false) and five identical screenshots."
+  },
+  {
+   "severity": "severe",
+   "lines": "562-589",
+   "text": "killEnemy sets e.state='dead' (563) before every check of e.state==='dive'/'beam' (568, 570, 571, 581). Consequences if the game ran: diving enemies always score formation points (50/80/150; 100/160/400/800/1600 never awarded) and a captured fighter is always destroyed, never freed, so rescue, docking and the dual fighter (541-552, 583-584) are dead code."
+  },
+  {
+   "severity": "severe",
+   "lines": "467-471, 513-514, 520-526, 577",
+   "text": "Goei escorts are set to state 'escort' and positioned only while their boss is in 'dive' (513-514). When the boss finishes its dive (t>=1 at 504) and enters 'return' or 'beam', the escorts stay frozen in 'escort' state, usually below the screen (y=H+34/H+46), where upward shots cannot reach them. They are released only if that boss is later killed (577), and a second dive of the same boss overwrites e.escorts (470), orphaning them for good: the stage can then never clear (433). Latent, since the game never runs."
+  },
+  {
+   "severity": "minor",
+   "lines": "534",
+   "text": "Beam end condition `!beamNodes&&G.muted&&e.beamT<3.4`: when muted, beamStart (146) creates no nodes, so the tractor beam would end after 0.1 s instead of 3.5 s."
+  },
+  {
+   "severity": "minor",
+   "lines": "451-457, 387",
+   "text": "captiveShoot computes an aimed vx, but the enemy-bullet update only applies vy, so captive shots would fall straight down instead of toward the player."
+  },
+  {
+   "severity": "minor",
+   "lines": "706, 662, 555-561",
+   "text": "While being pulled up by the beam the ship is drawn with the normal white/blue palette (sprPlayer); it only turns red once held (sprCaptured at 696). Spec says it turns red when caught."
+  },
+  {
+   "severity": "minor",
+   "lines": "363, 334",
+   "text": "The shot cap checks `G.shots.length<2` before a dual fighter fires two shots, so three player shots could be on screen at once."
+  },
+  {
+   "severity": "minor",
+   "lines": "613",
+   "text": "Wave bonus is added via addScore with a '1000' popup and announced with a second 'BONUS 1000' popup, so the two overlap."
+  },
+  {
+   "severity": "minor",
+   "lines": "593-630",
+   "text": "In challenging stages no player-vs-enemy collision is checked, so the fly-through enemies cannot hit the player."
+  },
+  {
+   "severity": "minor",
+   "lines": "193, 312, 324",
+   "text": "High score is updated live (324) but only written to localStorage after GAME OVER + 4 s (312); closing the tab mid-game loses it."
+  },
+  {
+   "severity": "minor",
+   "lines": "336, 339-343, 768, 773",
+   "text": "Leftover junk: an uncalled updateBullets with a 'placeholder removed below' comment and a broken integrator, a no-op `G.hits===G.hits`, `G.ftime+=0`, and a setInterval hack that advances G.ftime only on the title to blink the prompt."
+  }
+ ],
+ "verdict": "not playable",
+ "summary": "As delivered the game is a frozen title screen: `pressed` is a const that update() reassigns every frame (167 vs 302/315), so the first fixed step throws, the rAF chain dies, and Enter, movement, sound and every state after 'title' are unreachable; the play-test confirms it (pageerror at t=0, starts=false, five identical screenshots). It is scored strictly by the rubric's rule that code which can never trigger earns nothing, which is why nearly every gameplay item is 0 although the code for it is present. Read as a design, the file is a compact (777 lines), reasonably organised Galaga with most of the spec sketched in: Catmull-Rom entry paths in five groups, sway and breathing, boss dives with escorts, a widening animated tractor beam with capture and a captive held above the boss, challenging stages with waves and the hit-count screen, badges in arcade denominations, synthesized sounds and a proper accumulator loop; on that reading it would score in the mid-60s. But even with the const bug fixed it carries two serious logic faults: killEnemy marks the enemy dead before reading its state, so diving points and the rescue/dual-fighter mechanic never happen, and escorts get stranded off-screen so a stage can fail to clear. Sprites are small but recognisable and the title screen looks the part; code quality is middling, with several no-op lines and an uncalled leftover function suggesting the file was never run before being handed in."
+}

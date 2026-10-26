@@ -772,5 +772,255 @@
   "passed": 8,
   "errors": [],
   "n_errors": 0
+ },
+ "5090-iq3_s-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_s-medium-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Unexpected token ']'"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_s-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_s-medium32k-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 3,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Assignment to constant variable."
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_s-off-s1": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "rows is not iterable"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_s-off-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 3,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "g.map is not a function"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-iq3_s-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-iq3_s-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q4_k_xl-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q4_k_xl-medium-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading '0')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-unsloth-ud-q4_k_xl-medium32k-s1": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot set properties of null (setting 'stars')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-unsloth-ud-q4_k_xl-medium32k-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "h is not defined"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-unsloth-ud-q4_k_xl-off-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q4_k_xl-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q4_k_xl-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q4_k_xl-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
  }
 }

@@ -44,7 +44,7 @@ ARMS = {
 MAX_TOKENS = 49152
 
 
-def post(body, timeout=7200):
+def post(body, timeout=4 * 3600):   # UD-Q4_K_XL from the SSD on 64 GB can take over 2 h for an 80K-token run
     req = urllib.request.Request(f"http://127.0.0.1:{PORT}/v1/chat/completions", data=json.dumps(body).encode(),
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=timeout) as r:

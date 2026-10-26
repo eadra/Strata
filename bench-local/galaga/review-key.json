@@ -31,5 +31,21 @@
  "AF": "5090-iq3_xxs-off-s1",
  "AG": "5090-iq3_xxs-medium32k-s2",
  "AI": "5090-iq3_xxs-medium-s1",
- "AJ": "5090-iq3_xxs-medium32k-s1"
+ "AJ": "5090-iq3_xxs-medium32k-s1",
+ "AA": "5090-iq3_s-xhigh32k-s1",
+ "AC": "5090-iq3_s-medium32k-s1",
+ "AH": "5090-iq3_s-xhigh32k-s2",
+ "AK": "5090-iq3_s-medium32k-s2",
+ "AL": "5090-iq3_s-off-s1",
+ "AM": "5090-iq3_s-medium-s1",
+ "AN": "5090-iq3_s-medium-s2",
+ "AO": "5090-iq3_s-off-s2",
+ "AP": "5090-unsloth-ud-q4_k_xl-xhigh32k-s1",
+ "AQ": "5090-unsloth-ud-q4_k_xl-medium-s1",
+ "AR": "5090-unsloth-ud-q4_k_xl-medium32k-s1",
+ "AS": "5090-unsloth-ud-q4_k_xl-medium32k-s2",
+ "AT": "5090-unsloth-ud-q4_k_xl-medium-s2",
+ "AU": "5090-unsloth-ud-q4_k_xl-xhigh32k-s2",
+ "AV": "5090-unsloth-ud-q4_k_xl-off-s2",
+ "AW": "5090-unsloth-ud-q4_k_xl-off-s1"
 }

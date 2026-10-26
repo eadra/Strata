@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Galaga</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  #wrap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    background: #000;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+  }
+</style>
+</head>
+<body>
+<div id="wrap"><canvas id="game" width="224" height="288"></canvas></div>
+<script>
+'use strict';
+
+/*
+  Galaga-style clone in one file.
+  - Fixed 60 Hz simulation
+  - Separate state / update / render
+  - All graphics and sound generated in code
+*/
+
+// ---------------------------------------------------------------------------
+// Canvas and scaling
+// ---------------------------------------------------------------------------
+const WIDTH = 224;
+const HEIGHT = 288;
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+ctx.imageSmoothingEnabled = false;
+
+function resizeCanvas() {
+  const sx = Math.floor(window.innerWidth / WIDTH);
+  const sy = Math.floor(window.innerHeight / HEIGHT);
+  let scale = Math.max(1, Math.min(sx, sy));
+  canvas.style.width = (WIDTH * scale) + 'px';
+  canvas.style.height = (HEIGHT * scale) + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ---------------------------------------------------------------------------
+// Tiny 3x5 bitmap font for crisp text
+// ---------------------------------------------------------------------------
+const FONT = {
+  'A':['010','101','111','101','101'],
+  'B':['110','101','110','101','110'],
+  'C':['011','100','100','100','011'],
+  'D':['110','101','101','101','110'],
+  'E':['111','100','110','100','111'],
+  'F':['111','100','110','100','100'],
+  'G':['011','100','101','101','111'],
+  'H':['101','101','111','101','101'],
+  'I':['111','010','010','010','111'],
+  'J':['001','001','001','101','010'],
+  'K':['101','101','110','101','101'],
+  'L':['100','100','100','100','111'],
+  'M':['101','111','111','101','101'],
+  'N':['101','111','111','111','101'],
+  'O':['010','101','101','101','010'],
+  'P':['110','101','110','100','100'],
+  'Q':['010','101','101','110','011'],
+  'R':['110','101','110','101','101'],
+  'S':['011','100','010','001','110'],
+  'T':['111','010','010','010','010'],
+  'U':['101','101','101','101','111'],
+  'V':['101','101','101','101','010'],
+  'W':['101','101','111','111','101'],
+  'X':['101','101','010','101','101'],
+  'Y':['101','101','010','010','010'],
+  'Z':['111','001','010','100','111'],
+  '0':['111','101','101','101','111'],
+  '1':['010','110','010','010','111'],
+  '2':['111','001','111','100','111'],
+  '3':['111','001','111','001','111'],
+  '4':['101','101','111','001','001'],
+  '5':['111','100','111','001','111'],
+  '6':['111','100','111','101','111'],
+  '7':['111','001','001','001','001'],
+  '8':['111','101','111','101','111'],
+  '9':['111','101','111','001','111'],
+  ' ':['000','000','000','000','000'],
+  ':':['000','010','000','010','000'],
+  '%':['101','001','010','100','101'],
+  '!':['010','010','010','000','010'],
+  '.':['000','000','000','000','010'],
+  '-':['000','000','111','000','000'],
+  '/':['001','001','010','100','100'],
+  '+':['000','010','111','010','000']
+};
+
+function drawText(text, x, y, color = '#ffffff', scale = 1, center = false) {
+  text = String(text).toUpperCase();
+  const charStep = 4 * scale;
+  const totalWidth = Math.max(0, text.length * charStep - scale);
+  let startX = center ? Math.round(x - totalWidth / 2) : Math.round(x);
+  ctx.fillStyle = color;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    const rows = FONT[ch];
+    if (!rows) continue;
+    const gx = startX + i * charStep;
+    for (let r = 0; r < 5; r++) {
+      const row = rows[r];
+      for (let c = 0; c < 3; c++) {
+        if (row[c] === '1') {
+          ctx.fillRect(gx + c * scale, y + r * scale, scale, scale);
+        }
+      }
+    }
+  }
+}
+
+function textWidth(text, scale = 1) {
+  return Math.max(0, String(text).length * 4 * scale - scale);
+}
+
+// ---------------------------------------------------------------------------
+// Sprite factory
+// ---------------------------------------------------------------------------
+function makeSprite(rows, palette) {
+  let w = 0;
+  for (const r of rows) w = Math.max(w, r.length);
+  const h = rows.length;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const g = c.getContext('2d');
+  for (let y = 0; y < h; y++) {
+    const row = rows[y];
+    for (let x = 0; x < row.length; x++) {
+      const ch = row[x];
+      if (ch === '.' || ch === ' ') continue;
+      const col = palette[ch];
+      if (!col) continue;
+      g.fillStyle = col;
+      g.fillRect(x, y, 1, 1);
+    }
+  }
+  return c;
+}
+
+const PLAYER_ROWS = [
+  "......W......",
+  ".....WBW.....",
+  ".....WBW.....",
+  "....WBBBW....",
+  "....WBBBW....",
+  "...WBBBBBW...",
+  "..WBBBBBBBW..",
+  ".WBBBBBBBBBW.",
+  ".WBWBBBBBWBW.",
+  ".WBWBBBBBWBW.",
+  "WWBBWBWBWBBWW",
+  ".WBBBBBBBBBW.",
+  "..WBBBBBBBW..",
+  "...W.....W...",
+  "............."
+];
+
+const ZAKO_ROWS_1 = [
+  "................",
+  "......YYYY......",
+  ".....YYYYYY.....",
+  ".....YYBBYY.....",
+  ".....YYBBYY.....",
+  "....YYYYYYYY....",
+  "...YYBBBBBBYY...",
+  "...YYBBBBBBYY...",
+  "..YYBBBBBBBBYY..",
+  "..YYBBBBBBBBYY..",
+  ".YYBBBBBBBBBBYY.",
+  ".YYBBBBBBBBBBYY.",
+  "..YY........YY..",
+  "...Y........Y...",
+  "................",
+  "................"
+];
+
+const ZAKO_ROWS_2 = [
+  "................",
+  "................",
+  "......YYYY......",
+  ".....YYYYYY.....",
+  ".....YYBBYY.....",
+  ".....YYBBYY.....",
+  "....YYYYYYYY....",
+  "...YYBBBBBBYY...",
+  "...YYBBBBBBYY...",
+  "..YYBBBBBBBBYY..",
+  "..YYBBBBBBBBYY..",
+  ".YYBBBBBBBBBBYY.",
+  ".YYBBBBBBBBBBYY.",
+  "..YY........YY..",
+  "...Y........Y...",
+  "................"
+];
+
+const GOEI_ROWS_1 = [
+  "................",
+  "......RRRR......",
+  "....RRWWWWRR....",
+  "...RRWWRRWWRR...",
+  "..RRWWRRRRWWRR..",
+  ".RRWWRRRRRRWWRR.",
+  ".RRWWRRRRRRWWRR.",
+  "..RRWWRRRRWWRR..",
+  "...RRWWRRWWRR...",
+  "....RRWWWWRR....",
+  "......RRRR......",
+  "................",
+  "................",
+  "................",
+  "................",
+  "................"
+];
+
+const GOEI_ROWS_2 = [
+  "................",
+  "................",
+  "......RRRR......",
+  "....RRWWWWRR....",
+  "...RRWWRRWWRR...",
+  "..RRWWRRRRWWRR..",
+  ".RRWWRRRRRRWWRR.",
+  ".RRWWRRRRRRWWRR.",
+  "..RRWWRRRRWWRR..",
+  "...RRWWRRWWRR...",
+  "....RRWWWWRR....",
+  "......RRRR......",
+  "................",
+  "................",
+  "................",
+  "................"
+];
+
+const BOSS_ROWS_1 = [
+  "................",
+  "................",
+  ".....GGGGGG.....",
+  "....GGYYYYGG....",
+  "...GGYYYYYYGG...",
+  "..GGYYGGGGYYGG..",
+  ".GGYYGGGGGGYYGG.",
+  ".GGYYGGGGGGYYGG.",
+  "..GGYYGGGGYYGG..",
+  "...GGYYYYYYGG...",
+  "....GGYYYYGG....",
+  ".....GGGGGG.....",
+  "......G..G......",
+  "................",
+  "................",
+  "................"
+];
+
+const BOSS_ROWS_2 = [
+  "................",
+  ".....GGGGGG.....",
+  "....GGYYYYGG....",
+  "...GGYYYYYYGG...",
+  "..GGYYGGGGYYGG..",
+  ".GGYYGGGGGGYYGG.",
+  ".GGYYGGGGGGYYGG.",
+  "..GGYYGGGGYYGG..",
+  "...GGYYYYYYGG...",
+  "....GGYYYYGG....",
+  ".....GGGGGG.....",
+  "......G..G......",
+  "................",
+  "................",
+  "................",
+  "................"
+];
+
+const PAL_PLAYER = { W: '#ffffff', B: '#2020ff' };
+const PAL_CAPTURED = { W: '#ffffff', B: '#ff2020' };
+const PAL_ZAKO = { Y: '#ffff00', B: '#0000ff' };
+const PAL_GOEI = { R: '#ff0000', W: '#ffffff' };
+const PAL_BOSS = { G: '#00ff00', Y: '#ffff00' };
+const PAL_BOSS_HIT = { G: '#0000ff', Y: '#ff00ff' };
+
+const SPR = {
+  player: makeSprite(PLAYER_ROWS, PAL_PLAYER),
+  captured: makeSprite(PLAYER_ROWS, PAL_CAPTURED),
+  hostile: makeSprite(PLAYER_ROWS, PAL_CAPTURED),
+  zako: [makeSprite(ZAKO_ROWS_1, PAL_ZAKO), makeSprite(ZAKO_ROWS_2, PAL_ZAKO)],
+  goei: [makeSprite(GOEI_ROWS_1, PAL_GOEI), makeSprite(GOEI_ROWS_2, PAL_GOEI)],
+  boss: [makeSprite(BOSS_ROWS_1, PAL_BOSS), makeSprite(BOSS_ROWS_2, PAL_BOSS)],
+  bossHit: [makeSprite(BOSS_ROWS_1, PAL_BOSS_HIT), makeSprite(BOSS_ROWS_2, PAL_BOSS_HIT)]
+};
+
+function drawSprite(spr, x, y, alpha = 1) {
+  if (alpha !== 1) ctx.globalAlpha = alpha;
+  ctx.drawImage(spr, Math.round(x - spr.width / 2), Math.round(y - spr.height / 2));
+  if (alpha !== 1) ctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Audio
+// ---------------------------------------------------------------------------
+let audioCtx = null;
+let muted = false;
+
+function initAudio() {
+  if (audioCtx) {
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return;
+  }
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) {
+    audioCtx = null;
+  }
+}
+
+function beepAt(freq, start, dur, type = 'square', vol = 0.08, slideTo = null) {
+  if (muted || !audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(Math.max(1, freq), start);
+  if (slideTo) {
+    osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), start + dur);
+  }
+  gain.gain.setValueAtTime(vol, start);
+  gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(start);
+  osc.stop(start + dur + 0.02);
+}
+
+function beep(freq, dur, type = 'square', vol = 0.08, slideTo = null) {
+  if (!audioCtx) return;
+  beepAt(freq, audioCtx.currentTime, dur, type, vol, slideTo);
+}
+
+function noiseBurst(dur, vol = 0.12, cutoff = 1200) {
+  if (muted || !audioCtx) return;
+  const t = audioCtx.currentTime;
+  const n = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+  const buf = audioCtx.createBuffer(1, n, audioCtx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.frequency.value = cutoff;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filter);
+  filter.connect(gain);
+  gain.connect(audioCtx.destination);
+  src.start(t);
+}
+
+function sndShot() { beep(880, 0.07, 'square', 0.05, 440); }
+function sndEnemyHit() { noiseBurst(0.05, 0.06, 1500); beep(220, 0.05, 'square', 0.04, 110); }
+function sndEnemyDestroy() { noiseBurst(0.22, 0.12, 900); }
+function sndBossHit() { beep(160, 0.12, 'square', 0.09, 80); }
+function sndPlayerExplosion() {
+  noiseBurst(0.65, 0.20, 700);
+  beep(120, 0.55, 'sawtooth', 0.10, 35);
+}
+function sndTractor() {
+  beep(320, 0.55, 'sawtooth', 0.07, 90);
+  beep(160, 0.55, 'square', 0.04, 55);
+}
+function sndExtraShip() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  [880, 1100, 1320].forEach((f, i) => beepAt(f, t + i * 0.08, 0.08, 'square', 0.07));
+}
+function sndStageStart() {
+  if (!audioCtx) return;
+  const t = audioCtx.currentTime;
+  [660, 880, 990, 1320].forEach((f, i) => beepAt(f, t + i * 0.11, 0.10, 'square', 0.07));
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function rand(a, b) { return a + Math.random() * (b - a); }
+function randi(a, b) { return Math.floor(rand(a, b + 1)); }
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function bezierPoint(t, p0, p1, p2, p3) {
+  const mt = 1 - t;
+  const a = mt * mt * mt;
+  const b = 3 * mt * mt * t;
+  const c = 3 * mt * t * t;
+  const d = t * t * t;
+  return a * p0 + b * p1 + c * p2 + d * p3;
+}
+
+function rectOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+  return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+}
+
+function loadHigh() {
+  try {
+    return parseInt(localStorage.getItem('galaga.high') || '0', 10) || 0;
+  } catch (e) {
+    return 0;
+  }
+}
+function saveHigh(v) {
+  try { localStorage.setItem('galaga.high', String(v)); } catch (e) {}
+}
+
+// ---------------------------------------------------------------------------
+// Starfield
+// ---------------------------------------------------------------------------
+const STAR_COLORS = ['#ffffff', '#80ffff', '#ffff80', '#ff8080'];
+const stars = [];
+for (let i = 0; i < 90; i++) {
+  stars.push({
+    x: Math.random() * WIDTH,
+    y: Math.random() * HEIGHT,
+    speed: rand(0.15, 1.6),
+    phase: Math.random() * Math.PI * 2,
+    color: STAR_COLORS[randi(0, STAR_COLORS.length - 1)]
+  });
+}
+
+function updateStars() {
+  for (const s of stars) {
+    s.y += s.speed;
+    s.phase += 0.08;
+    if (s.y > HEIGHT) {
+      s.y = -2;
+      s.x = Math.random() * WIDTH;
+    }
+  }
+}
+
+function drawStars() {
+  for (const s of stars) {
+    const tw = 0.55 + 0.45 * Math.sin(s.phase);
+    ctx.globalAlpha = tw;
+    ctx.fillStyle = s.color;
+    ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 1);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Game state
+// ---------------------------------------------------------------------------
+const STATE = {
+  TITLE: 'title',
+  STAGE_INTRO: 'stageIntro',
+  PLAY: 'play',
+  STAGE_CLEAR: 'stageClear',
+  CHALLENGE_INTRO: 'challengeIntro',
+  CHALLENGE: 'challenge',
+  CHALLENGE_RESULTS: 'challengeResults',
+  GAME_OVER: 'gameOver',
+  RESULTS: 'results'
+};
+
+const game = {
+  state: STATE.TITLE,
+  stage: 1,
+  score: 0,
+  high: loadHigh(),
+  shots: 0,
+  hits: 0,
+  reserve: 2,
+  nextExtra: 20000,
+  stateTimer: 0,
+  gameOverTimer: 0,
+  challengeWave: 0,
+  challengeWaveAlive: 0,
+  challengeWaveKills: 0,
+  challengeTotalKills: 0,
+  challengeBonus: 0,
+  challengePerfect: false,
+  challengeNextWaveTimer: 0
+};
+
+const formation = {
+  x: 112,
+  y: 80,
+  swayPhase: 0,
+  swayX: 0,
+  breathPhase: 0,
+  scale: 1,
+  allEntered: false
+};
+
+let enemies = [];
+let playerBullets = [];
+let enemyBullets = [];
+let explosions = [];
+let friendlyFighters = [];
+
+const player = {
+  x: 112,
+  y: 256,
+  fighters: [{ offset: 0 }], // offset from player.x; dual has two entries
+  fireCooldown: 0,
+  invuln: 0,
+  respawnTimer: 0
+};
+
+let tick = 0;
+let paused = false;
+let diveTimer = 120;
+let enemyFireTimer = 120;
+let readyTimer = 0;
+
+const keys = {
+  left: false,
+  right: false,
+  fire: false
+};
+
+// ---------------------------------------------------------------------------
+// Formation slot positions
+// ---------------------------------------------------------------------------
+function slotPosition(e) {
+  return {
+    x: formation.x + e.offX * formation.scale + formation.swayX,
+    y: formation.y + e.offY * formation.scale
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Entry waves
+// ---------------------------------------------------------------------------
+const ENTRY_PATTERNS = [
+  { sx: -20, sy: 300, dx: 10, dy: -10, c1x: 35, c1y: 225, c2x: 75, c2y: 115 },
+  { sx: 244, sy: 300, dx: -10, dy: -10, c1x: 189, c1y: 225, c2x: 149, c2y: 115 },
+  { sx: -20, sy: -20, dx: 10, dy: 10, c1x: 35, c1y: 45, c2x: 80, c2y: 85 },
+  { sx: 244, sy: -20, dx: -10, dy: 10, c1x: 189, c1y: 45, c2x: 144, c2y: 85 },
+  { sx: 112, sy: 310, dx: 0, dy: -14, c1x: 45, c1y: 205, c2x: 179, c2y: 105 }
+];
+
+function buildFormationSlots() {
+  const slots = [];
+
+  // 4 Boss Galaga, top row, centered
+  for (let c = 0; c < 4; c++) {
+    slots.push({ type: 'boss', offX: -24 + c * 16, offY: -32 });
+  }
+
+  // 16 Goei, two rows of 8
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 8; c++) {
+      slots.push({ type: 'goei', offX: -56 + c * 16, offY: -16 + r * 16 });
+    }
+  }
+
+  // 20 Zako, two rows of 10
+  for (let r = 0; r < 2; r++) {
+    for (let c = 0; c < 10; c++) {
+      slots.push({ type: 'zako', offX: -72 + c * 16, offY: 16 + r * 16 });
+    }
+  }
+
+  return slots;
+}
+
+function spawnFormation() {
+  enemies = [];
+  const slots = buildFormationSlots();
+  for (let wave = 0; wave < 5; wave++) {
+    const pat = ENTRY_PATTERNS[wave];
+    for (let i = 0; i < 8; i++) {
+      const s = slots[wave * 8 + i];
+      const idx = wave * 8 + i;
+      const e = {
+        type: s.type,
+        state: 'entry',
+        offX: s.offX,
+        offY: s.offY,
+        x: pat.sx + pat.dx * i,
+        y: pat.sy + pat.dy * i,
+        hp: s.type === 'boss' ? 2 : 1,
+        hit: false,
+        animTimer: randi(0, 11),
+        frame: 0,
+        entered: false,
+        dead: false,
+        hasCaptured: false,
+        escorts: [],
+        entryDelay: i * 5,
+        entry: {
+          t: 0,
+          speed: 0.018 + game.stage * 0.0005,
+          sx: pat.sx + pat.dx * i,
+          sy: pat.sy + pat.dy * i,
+          c1x: pat.c1x + i * 2,
+          c1y: pat.c1y + i * 2,
+          c2x: pat.c2x + i * 2,
+          c2y: pat.c2y + i * 2
+        },
+        dive: null,
+        ret: null,
+        beamTimer: 0
+      };
+      enemies.push(e);
+    }
+  }
+  formation.allEntered = false;
+  formation.swayPhase = 0;
+  formation.breathPhase = 0;
+  formation.scale = 1;
+}
+
+// ---------------------------------------------------------------------------
+// Stage flow
+// ---------------------------------------------------------------------------
+function isChallengingStage(stage) {
+  return stage === 3 || (stage > 3 && ((stage - 3) % 4 === 0));
+}
+
+function resetGame() {
+  game.stage = 1;
+  game.score = 0;
+  game.shots = 0;
+  game.hits = 0;
+  game.reserve = 2;
+  game.nextExtra = 20000;
+  game.gameOverTimer = 0;
+  player.x = 112;
+  player.fighters = [{ offset: 0 }];
+  player.fireCooldown = 0;
+  player.invuln = 0;
+  player.respawnTimer = 0;
+  playerBullets = [];
+  enemyBullets = [];
+  explosions = [];
+  friendlyFighters = [];
+  diveTimer = 120;
+  enemyFireTimer = 120;
+  readyTimer = 0;
+}
+
+function startStage(stage) {
+  game.stage = stage;
+  resetForStage();
+  spawnFormation();
+  game.state = STATE.STAGE_INTRO;
+  game.stateTimer = 120;
+  sndStageStart();
+}
+
+function startChallenge(stage) {
+  game.stage = stage;
+  resetForStage();
+  game.challengeWave = 0;
+  game.challengeWaveAlive = 0;
+  game.challengeWaveKills = 0;
+  game.challengeTotalKills = 0;
+  game.challengeBonus = 0;
+  game.challengePerfect = false;
+  game.challengeNextWaveTimer = 0;
+  game.state = STATE.CHALLENGE_INTRO;
+  game.stateTimer = 120;
+  sndStageStart();
+}
+
+function resetForStage() {
+  enemies = [];
+  playerBullets = [];
+  enemyBullets = [];
+  friendlyFighters = [];
+  diveTimer = Math.max(40, 150 - game.stage * 8);
+  enemyFireTimer = Math.max(40, 120 - game.stage * 5);
+  readyTimer = 0;
+  formation.allEntered = false;
+  formation.swayPhase = 0;
+  formation.breathPhase = 0;
+  formation.scale = 1;
+}
+
+function beginStagePlay() {
+  game.state = STATE.PLAY;
+  readyTimer = 90;
+}
+
+function beginChallengePlay() {
+  game.state = STATE.CHALLENGE;
+  spawnChallengeWave(0);
+}
+
+function nextStage() {
+  const ns = game.stage + 1;
+  if (isChallengingStage(ns)) startChallenge(ns);
+  else startStage(ns);
+}
+
+// ---------------------------------------------------------------------------
+// Scoring and lives
+// ---------------------------------------------------------------------------
+function addScore(pts) {
+  game.score += pts;
+  if (game.score > game.high) {
+    game.high = game.score;
+    saveHigh(game.high);
+  }
+  while (game.score >= game.nextExtra) {
+    game.reserve++;
+    game.nextExtra += 70000;
+    sndExtraShip();
+  }
+}
+
+function enemyPoints(e) {
+  if (e.challenge) return 100;
+  if (e.type === 'zako') return e.state === 'formation' ? 50 : 100;
+  if (e.type === 'goei') return e.state === 'formation' ? 80 : 160;
+  if (e.type === 'boss') {
+    if (e.state === 'formation') return 150;
+    let escorts = 0;
+    if (e.escorts) {
+      for (const s of e.escorts) {
+        if (s && !s.dead && (s.state === 'escort' || s.state === 'dive' || s.state === 'return')) escorts++;
+      }
+    }
+    return 400 * Math.pow(2, Math.min(2, escorts));
+  }
+  return 0;
+}
+
+// ---------------------------------------------------------------------------
+// Explosions
+// ---------------------------------------------------------------------------
+function addExplosion(x, y, color, big = false) {
+  explosions.push({
+    x, y, color,
+    frame: 0,
+    timer: 0,
+    speed: big ? 4 : 5,
+    maxFrames: 4,
+    big
+  });
+}
+
+function updateExplosions() {
+  for (const ex of explosions) {
+    ex.timer++;
+    if (ex.timer >= ex.speed) {
+      ex.timer = 0;
+      ex.frame++;
+      if (ex.frame >= ex.maxFrames) ex.dead = true;
+    }
+  }
+  explosions = explosions.filter(e => !e.dead);
+}
+
+function drawExplosion(ex) {
+  const x = Math.round(ex.x);
+  const y = Math.round(ex.y);
+  ctx.fillStyle = ex.color;
+  const f = ex.frame;
+  if (f === 0) {
+    ctx.fillRect(x - 1, y - 1, 3, 3);
+  } else if (f === 1) {
+    ctx.fillRect(x - 3, y - 1, 7, 3);
+    ctx.fillRect(x - 1, y - 3, 3, 7);
+  } else if (f === 2) {
+    ctx.fillRect(x - 5, y - 5, 11, 2);
+    ctx.fillRect(x - 5, y + 3, 11, 2);
+    ctx.fillRect(x - 5, y - 5, 2, 11);
+    ctx.fillRect(x + 3, y - 5, 2, 11);
+  } else {
+    const pts = [[-7,-4],[-5,2],[-2,-7],[0,0],[2,7],[5,-2],[7,4],[-3,5],[4,-5]];
+    for (const p of pts) ctx.fillRect(x + p[0], y + p[1], 2, 2);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Bullets
+// ---------------------------------------------------------------------------
+function firePlayer() {
+  if (player.fighters.length === 0) return;
+  if (player.fireCooldown > 0) return;
+  if (playerBullets.length >= 2) return;
+
+  if (player.fighters.length === 1) {
+    playerBullets.push({ x: player.x, y: player.y - 8, vx: 0, vy: -4.6 });
+    game.shots++;
+  } else {
+    const left = player.x + player.fighters[0].offset;
+    const right = player.x + player.fighters[1].offset;
+    playerBullets.push({ x: left, y: player.y - 8, vx: 0, vy: -4.6 });
+    playerBullets.push({ x: right, y: player.y - 8, vx: 0, vy: -4.6 });
+    game.shots += 2;
+  }
+  player.fireCooldown = 9;
+  sndShot();
+}
+
+function updateBullets() {
+  for (const b of playerBullets) {
+    b.x += b.vx;
+    b.y += b.vy;
+    if (b.y < -10) b.dead = true;
+  }
+  playerBullets = playerBullets.filter(b => !b.dead);
+
+  for (const b of enemyBullets) {
+    b.x += b.vx;
+    b.y += b.vy;
+    if (b.y < -10 || b.y > HEIGHT + 10 || b.x < -10 || b.x > WIDTH + 10) b.dead = true;
+  }
+  enemyBullets = enemyBullets.filter(b => !b.dead);
+}
+
+function drawBullets() {
+  for (const b of playerBullets) {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(Math.round(b.x) - 1, Math.round(b.y) - 3, 2, 6);
+    ctx.fillStyle = '#80ffff';
+    ctx.fillRect(Math.round(b.x) - 1, Math.round(b.y) - 3, 2, 2);
+  }
+  for (const b of enemyBullets) {
+    ctx.fillStyle = '#ff4040';
+    ctx.fillRect(Math.round(b.x) - 1, Math.round(b.y) - 3, 2, 6);
+    ctx.fillStyle = '#ffff80';
+    ctx.fillRect(Math.round(b.x) - 1, Math.round(b.y) - 3, 2, 2);
+  }
+}
+
+function enemyFire(e, aimed = false) {
+  if (enemyBullets.length >= 7) return;
+  let sx = e.x;
+  let sy = e.y + 8;
+  if (e.type === 'boss' && e.hasCaptured && (e.state === 'dive' || e.state === 'beam' || e.state === 'beamMove')) {
+    sy = e.y - 8;
+  }
+  let vx = 0;
+  let vy = 2.2 + Math.min(1.4, game.stage * 0.08);
+  if (aimed && player.fighters.length > 0) {
+    const target = player.x + rand(-8, 8);
+    vx = (target - sx) / 85;
+  }
+  enemyBullets.push({ x: sx, y: sy, vx, vy });
+}
+
+// ---------------------------------------------------------------------------
+// Player damage / capture / death
+// ---------------------------------------------------------------------------
+function playerFighterBoxes() {
+  return player.fighters.map(f => ({
+    x: player.x + f.offset - 4,
+    y: player.y - 6,
+    w: 9,
+    h: 12,
+    offset: f.offset
+  }));
+}
+
+function damageFighter(index, byCapture = false, captor = null) {
+  const f = player.fighters[index];
+  const wx = player.x + f.offset;
+
+  if (!byCapture) {
+    addExplosion(wx, player.y, '#ffcc40', true);
+    sndPlayerExplosion();
+  }
+
+  player.fighters.splice(index, 1);
+
+  if (player.fighters.length === 0) {
+    if (byCapture && captor) {
+      captor.hasCaptured = true;
+    }
+    if (game.reserve > 0) {
+      game.reserve--;
+      player.respawnTimer = 90;
+      readyTimer = 0;
+    } else {
+      game.gameOverTimer = 120;
+    }
+  } else {
+    // Dual fighter became single. Keep the remaining fighter centered.
+    const rem = player.fighters[0];
+    const remWorld = player.x + rem.offset;
+    player.fighters = [{ offset: 0 }];
+    player.x = remWorld;
+    if (byCapture && captor) {
+      captor.hasCaptured = true;
+    }
+  }
+}
+
+function tryCaptureInBeam(e) {
+  if (player.fighters.length === 0 || player.invuln > 0 || player.respawnTimer > 0) return;
+  if (e.hasCaptured) return;
+
+  const len = 120;
+  const boxes = playerFighterBoxes();
+  for (let i = 0; i < boxes.length; i++) {
+    const b = boxes[i];
+    const py = player.y;
+    if (py < e.y + 6 || py > e.y + len) continue;
+    const t = (py - e.y) / len;
+    const half = lerp(5, 34, t);
+    const px = player.x + player.fighters[i].offset;
+    if (Math.abs(px - e.x) <= half) {
+      damageFighter(i, true, e);
+      startReturn(e);
+      sndTractor();
+      return;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Enemy state helpers
+// ---------------------------------------------------------------------------
+function startNormalDive(e) {
+  e.state = 'dive';
+  e.escortOf = null;
+  const aggressive = clamp(game.stage / 18, 0, 0.65);
+  const ex = player.fighters.length ? lerp(e.x, player.x, aggressive) + rand(-55, 55) : e.x + rand(-60, 60);
+  e.dive = {
+    t: 0,
+    speed: 0.013 + Math.min(0.012, game.stage * 0.001),
+    sx: e.x,
+    sy: e.y,
+    c1x: e.x + rand(-70, 70),
+    c1y: e.y + 55,
+    c2x: e.x + rand(-90, 90),
+    c2y: e.y + 130,
+    ex: ex,
+    ey: HEIGHT + 24,
+    phase: rand(0, Math.PI * 2),
+    amp: rand(12, 42),
+    fireTimer: randi(18, 70)
+  };
+}
+
+function startReturn(e) {
+  e.state = 'return';
+  const slot = slotPosition(e);
+  e.ret = {
+    t: 0,
+    speed: 0.022,
+    sx: e.x,
+    sy: e.y,
+    c1x: e.x + rand(-45, 45),
+    c1y: e.y + 35,
+    c2x: slot.x + rand(-25, 25),
+    c2y: slot.y - 45,
+    ex: slot.x,
+    ey: slot.y
+  };
+  if (e.type === 'boss' && e.escorts) {
+    for (const s of e.escorts) {
+      if (s && !s.dead && s.state === 'escort') startReturn(s);
+    }
+  }
+}
+
+function startReturnFromBottom(e) {
+  const slot = slotPosition(e);
+  e.state = 'return';
+  e.ret = {
+    t: 0,
+    speed: 0.024,
+    sx: slot.x + rand(-24, 24),
+    sy: -16,
+    c1x: slot.x + rand(-40, 40),
+    c1y: 25,
+    c2x: slot.x + rand(-20, 20),
+    c2y: slot.y - 40,
+    ex: slot.x,
+    ey: slot.y
+  };
+}
+
+function startBossBeam(e) {
+  e.state = 'beamMove';
+  e.beamTimer = 0;
+  const targetX = clamp(player.fighters.length ? player.x : e.x, 40, WIDTH - 40);
+  e.dive = {
+    t: 0,
+    speed: 0.011,
+    sx: e.x,
+    sy: e.y,
+    c1x: e.x + rand(-25, 25),
+    c1y: e.y + 45,
+    c2x: targetX + rand(-25, 25),
+    c2y: 95,
+    ex: targetX,
+    ey: 126
+  };
+  if (e.escorts) {
+    for (const s of e.escorts) {
+      if (s && !s.dead && s.state === 'escort') startReturn(s);
+    }
+  }
+}
+
+function freeCapturedFighter(e) {
+  friendlyFighters.push({
+    x: e.x,
+    y: e.y - 12,
+    t: 0,
+    side: player.x < WIDTH - 40 ? 1 : -1
+  });
+}
+
+function spawnHostileCaptured(e) {
+  const hostile = {
+    type: 'hostile',
+    state: 'dive',
+    offX: 0,
+    offY: 0,
+    x: e.x,
+    y: e.y - 14,
+    hp: 1,
+    animTimer: 0,
+    frame: 0,
+    entered: true,
+    dead: false,
+    hasCaptured: false,
+    escorts: [],
+    challenge: false,
+    dive: {
+      t: 0,
+      speed: 0.018,
+      sx: e.x,
+      sy: e.y - 14,
+      c1x: e.x + rand(-60, 60),
+      c1y: e.y + 40,
+      c2x: player.x + rand(-70, 70),
+      c2y: 190,
+      ex: player.x + rand(-60, 60),
+      ey: HEIGHT + 30,
+      phase: rand(0, Math.PI * 2),
+      amp: rand(20, 50),
+      fireTimer: randi(25, 65)
+    },
+    ret: null,
+    beamTimer: 0
+  };
+  enemies.push(hostile);
+}
+
+function destroyEnemy(e) {
+  if (e.dead) return;
+  e.dead = true;
+  const pts = enemyPoints(e);
+  addScore(pts);
+
+  if (e.challenge) {
+    game.challengeWaveKills++;
+    game.challengeTotalKills++;
+  }
+
+  let color = '#ffff00';
+  if (e.type === 'goei') color = '#ff4040';
+  if (e.type === 'boss') color = e.hit ? '#ff40ff' : '#40ff40';
+  if (e.type === 'hostile') color = '#ff4040';
+  addExplosion(e.x, e.y, color, e.type === 'boss' || e.type === 'hostile');
+  sndEnemyDestroy();
+
+  if (e.type === 'boss') {
+    if (e.hasCaptured) {
+      if (e.state === 'dive' || e.state === 'beam' || e.state === 'beamMove') {
+        freeCapturedFighter(e);
+      } else {
+        spawnHostileCaptured(e);
+      }
+    }
+    if (e.escorts) {
+      for (const s of e.escorts) {
+        if (s && !s.dead && s.state === 'escort') {
+          startNormalDive(s);
+        }
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Dive scheduling
+// ---------------------------------------------------------------------------
+function countActiveDivers() {
+  let n = 0;
+  for (const e of enemies) {
+    if (!e.dead && (e.state === 'dive' || e.state === 'beam' || e.state === 'beamMove' || e.state === 'escort')) n++;
+  }
+  return n;
+}
+
+function tryStartDive() {
+  if (readyTimer > 0) return;
+  if (player.fighters.length === 0) return;
+
+  diveTimer--;
+  if (diveTimer > 0) return;
+
+  const maxDivers = Math.min(3, 1 + Math.floor(game.stage / 4));
+  if (countActiveDivers() >= maxDivers) {
+    diveTimer = 25;
+    return;
+  }
+
+  const formationEnemies = enemies.filter(e => !e.dead && e.state === 'formation');
+  if (formationEnemies.length === 0) {
+    diveTimer = 30;
+    return;
+  }
+
+  const bosses = formationEnemies.filter(e => e.type === 'boss');
+  const canBeam = bosses.some(b => !b.hasCaptured);
+  const r = Math.random();
+
+  if (canBeam && r < 0.18 + Math.min(0.22, game.stage * 0.015)) {
+    const candidates = bosses.filter(b => !b.hasCaptured);
+    if (candidates.length) {
+      const boss = candidates[randi(0, candidates.length - 1)];
+      // Boss beam dive may have escorts too; keep it simple and send 0 or 1 escort.
+      const goeis = enemies.filter(e => !e.dead && e.type === 'goei' && e.state === 'formation');
+      if (goeis.length && Math.random() < 0.35) {
+        const esc = goeis[randi(0, goeis.length - 1)];
+        esc.state = 'escort';
+        esc.escortOf = boss;
+        esc.escortIndex = 0;
+        boss.escorts = [esc];
+      } else {
+        boss.escorts = [];
+      }
+      startBossBeam(boss);
+      diveTimer = Math.max(35, 155 - game.stage * 7) + randi(0, 70);
+      return;
+    }
+  }
+
+  if (bosses.length && r < 0.45) {
+    const boss = bosses[randi(0, bosses.length - 1)];
+    const goeis = enemies.filter(e => !e.dead && e.type === 'goei' && e.state === 'formation');
+    let escortCount = 0;
+    const rr = Math.random();
+    if (rr < 0.35) escortCount = 1;
+    if (rr >= 0.75) escortCount = 2;
+    escortCount = Math.min(escortCount, goeis.length);
+
+    boss.escorts = [];
+    for (let i = 0; i < escortCount; i++) {
+      const idx = randi(0, goeis.length - 1);
+      const esc = goeis.splice(idx, 1)[0];
+      esc.state = 'escort';
+      esc.escortOf = boss;
+      esc.escortIndex = i;
+      boss.escorts.push(esc);
+    }
+    startNormalDive(boss);
+    diveTimer = Math.max(30, 145 - game.stage * 7) + randi(0, 60);
+    return;
+  }
+
+  const normal = formationEnemies.filter(e => e.type === 'zako' || e.type === 'goei');
+  const pool = normal.length ? normal : formationEnemies;
+  const e = pool[randi(0, pool.length - 1)];
+  startNormalDive(e);
+  diveTimer = Math.max(25, 125 - game.stage * 6) + randi(0, 55);
+}
+
+// ---------------------------------------------------------------------------
+// Enemy update
+// ---------------------------------------------------------------------------
+function updateFormation() {
+  formation.swayPhase += 0.018;
+  formation.swayX = Math.sin(formation.swayPhase) * 8;
+
+  formation.allEntered = enemies.length > 0 && enemies.every(e => e.entered);
+  if (formation.allEntered) {
+    formation.breathPhase += 0.016;
+    formation.scale = 1 + Math.sin(formation.breathPhase) * 0.075;
+  } else {
+    formation.scale = 1;
+  }
+}
+
+function updateEnemy(e) {
+  e.animTimer++;
+  if (e.animTimer >= 12) {
+    e.animTimer = 0;
+    e.frame = e.frame ? 0 : 1;
+  }
+
+  if (e.state === 'entry') {
+    if (e.entryDelay > 0) {
+      e.entryDelay--;
+      return;
+    }
+    e.entry.t += e.entry.speed;
+    const slot = slotPosition(e);
+    if (e.entry.t >= 1) {
+      e.state = 'formation';
+      e.entered = true;
+      e.x = slot.x;
+      e.y = slot.y;
+    } else {
+      const t = e.entry.t;
+      e.x = bezierPoint(t, e.entry.sx, e.entry.c1x, e.entry.c2x, slot.x);
+      e.y = bezierPoint(t, e.entry.sy, e.entry.c1y, e.entry.c2y, slot.y);
+    }
+    return;
+  }
+
+  if (e.state === 'formation') {
+    const slot = slotPosition(e);
+    e.x = slot.x;
+    e.y = slot.y;
+    e.entered = true;
+    return;
+  }
+
+  if (e.state === 'challenge') {
+    if (e.challengeDelay > 0) {
+      e.challengeDelay--;
+      return;
+    }
+    e.challenge.t += e.challenge.speed;
+    const t = e.challenge.t;
+    const travel = WIDTH + 80;
+    e.x = e.challenge.startX + e.challenge.dir * t * travel;
+    e.y = e.challenge.baseY + Math.sin(t * e.challenge.freq + e.challenge.phase) * e.challenge.amp;
+    if (e.x < -30 || e.x > WIDTH + 30) {
+      e.dead = true;
+      game.challengeWaveAlive--;
+    }
+    return;
+  }
+
+  if (e.state === 'escort') {
+    const boss = e.escortOf;
+    if (!boss || boss.dead) {
+      startNormalDive(e);
+      return;
+    }
+    if (boss.state === 'formation' || boss.state === 'return') {
+      startReturn(e);
+      return;
+    }
+    const off = e.escortIndex === 0 ? -15 : 15;
+    e.x = boss.x + off;
+    e.y = boss.y + 16;
+    return;
+  }
+
+  if (e.state === 'dive') {
+    e.dive.t += e.dive.speed;
+    const t = e.dive.t;
+    if (t >= 1) {
+      startReturnFromBottom(e);
+      return;
+    }
+    e.x = bezierPoint(t, e.dive.sx, e.dive.c1x, e.dive.c2x, e.dive.ex);
+    e.y = bezierPoint(t, e.dive.sy, e.dive.c1y, e.dive.c2y, e.dive.ey);
+    e.x += Math.sin(t * 7 + e.dive.phase) * e.dive.amp * (1 - t * 0.55);
+
+    e.dive.fireTimer--;
+    if (e.dive.fireTimer <= 0 && player.fighters.length > 0) {
+      enemyFire(e, true);
+      e.dive.fireTimer = Math.max(18, 85 - game.stage * 4) + randi(0, 45);
+    }
+
+    if (e.y > HEIGHT + 12) {
+      startReturnFromBottom(e);
+    }
+    return;
+  }
+
+  if (e.state === 'return') {
+    e.ret.t += e.ret.speed;
+    const t = e.ret.t;
+    const slot = slotPosition(e);
+    e.ret.ex = slot.x;
+    e.ret.ey = slot.y;
+    if (t >= 1) {
+      e.state = 'formation';
+      e.entered = true;
+      e.x = slot.x;
+      e.y = slot.y;
+    } else {
+      e.x = bezierPoint(t, e.ret.sx, e.ret.c1x, e.ret.c2x, e.ret.ex);
+      e.y = bezierPoint(t, e.ret.sy, e.ret.c1y, e.ret.c2y, e.ret.ey);
+    }
+    return;
+  }
+
+  if (e.state === 'beamMove') {
+    e.dive.t += e.dive.speed;
+    const t = e.dive.t;
+    if (t >= 1) {
+      e.state = 'beam';
+      e.beamTimer = 170;
+      sndTractor();
+    } else {
+      e.x = bezierPoint(t, e.dive.sx, e.dive.c1x, e.dive.c2x, e.dive.ex);
+      e.y = bezierPoint(t, e.dive.sy, e.dive.c1y, e.dive.c2y, e.dive.ey);
+    }
+    return;
+  }
+
+  if (e.state === 'beam') {
+    e.beamTimer--;
+    tryCaptureInBeam(e);
+    if (e.beamTimer <= 0) {
+      startReturn(e);
+    }
+    return;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Challenge stage
+// ---------------------------------------------------------------------------
+function spawnChallengeWave(w) {
+  game.challengeWave = w;
+  game.challengeWaveKills = 0;
+  game.challengeWaveAlive = 8;
+
+  for (let i = 0; i < 8; i++) {
+    const dir = (w % 2 === 0) ? 1 : -1;
+    const startX = dir === 1 ? -22 : WIDTH + 22;
+    const baseY = 45 + (w % 3) * 24 + i * 3;
+    const amp = 34 + w * 4;
+    const freq = Math.PI * 2 * (1 + (w % 2));
+    const type = ['zako', 'goei', 'boss'][randi(0, 2)];
+    enemies.push({
+      type,
+      state: 'challenge',
+      offX: 0,
+      offY: 0,
+      x: startX,
+      y: baseY,
+      hp: type === 'boss' ? 2 : 1,
+      hit: false,
+      animTimer: randi(0, 11),
+      frame: 0,
+      entered: true,
+      dead: false,
+      challenge: true,
+      challengeDelay: i * 7,
+      challengeWave: w,
+      challenge: {
+        t: 0,
+        speed: 0.0065 + game.stage * 0.00025,
+        startX,
+        dir,
+        baseY,
+        amp,
+        freq,
+        phase: i * 0.45
+      },
+      dive: null,
+      ret: null,
+      beamTimer: 0,
+      hasCaptured: false,
+      escorts: []
+    });
+  }
+}
+
+function updateChallenge() {
+  for (const e of enemies) updateEnemy(e);
+  enemies = enemies.filter(e => !e.dead);
+
+  if (game.challengeNextWaveTimer > 0) {
+    game.challengeNextWaveTimer--;
+    if (game.challengeNextWaveTimer <= 0) {
+      if (game.challengeWave < 4) spawnChallengeWave(game.challengeWave + 1);
+    }
+  } else if (game.challengeWaveAlive <= 0 && enemies.length === 0) {
+    if (game.challengeWaveKills === 8) game.challengeBonus += 1000;
+    if (game.challengeWave < 4) {
+      game.challengeNextWaveTimer = 50;
+    } else {
+      game.challengePerfect = game.challengeTotalKills === 40;
+      if (game.challengePerfect) game.challengeBonus += 10000;
+      game.state = STATE.CHALLENGE_RESULTS;
+      game.stateTimer = 240;
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Collisions
+// ---------------------------------------------------------------------------
+function enemyHitbox(e) {
+  if (e.type === 'boss') return { x: e.x - 6, y: e.y - 6, w: 12, h: 12 };
+  if (e.type === 'hostile') return { x: e.x - 4, y: e.y - 6, w: 9, h: 12 };
+  return { x: e.x - 5, y: e.y - 5, w: 10, h: 10 };
+}
+
+function collidePlayerBullets() {
+  for (const b of playerBullets) {
+    if (b.dead) continue;
+    const bb = { x: b.x - 1, y: b.y - 3, w: 2, h: 6 };
+    for (const e of enemies) {
+      if (e.dead) continue;
+      const eb = enemyHitbox(e);
+      if (!rectOverlap(bb.x, bb.y, bb.w, bb.h, eb.x, eb.y, eb.w, eb.h)) continue;
+
+      b.dead = true;
+      game.hits++;
+
+      if (e.type === 'boss' && e.hp > 1) {
+        e.hp = 1;
+        e.hit = true;
+        sndBossHit();
+        addExplosion(e.x, e.y, '#ffffff');
+      } else {
+        destroyEnemy(e);
+      }
+      break;
+    }
+  }
+  enemies = enemies.filter(e => !e.dead);
+}
+
+function collideEnemyBullets() {
+  if (player.fighters.length === 0 || player.invuln > 0 || player.respawnTimer > 0) return;
+  const boxes = playerFighterBoxes();
+  for (const b of enemyBullets) {
+    if (b.dead) continue;
+    const bb = { x: b.x - 1, y: b.y - 3, w: 2, h: 6 };
+    for (let i = 0; i < boxes.length; i++) {
+      const fb = boxes[i];
+      if (rectOverlap(bb.x, bb.y, bb.w, bb.h, fb.x, fb.y, fb.w, fb.h)) {
+        b.dead = true;
+        damageFighter(i, false, null);
+        return;
+      }
+    }
+  }
+}
+
+function collidePlayerWithEnemies() {
+  if (player.fighters.length === 0 || player.invuln > 0 || player.respawnTimer > 0) return;
+  const boxes = playerFighterBoxes();
+  for (const e of enemies) {
+    if (e.dead) continue;
+    if (e.state === 'entry' && e.entryDelay > 0) continue;
+    const eb = enemyHitbox(e);
+    for (let i = 0; i < boxes.length; i++) {
+      const fb = boxes[i];
+      if (rectOverlap(fb.x, fb.y, fb.w, fb.h, eb.x, eb.y, eb.w, eb.h)) {
+        // Enemy destroyed too, as in the arcade ramming rule.
+        destroyEnemy(e);
+        damageFighter(i, false, null);
+        return;
+      }
+    }
+  }
+  enemies = enemies.filter(e => !e.dead);
+}
+
+// ---------------------------------------------------------------------------
+// Friendly freed fighter
+// ---------------------------------------------------------------------------
+function updateFriendlyFighters() {
+  for (const f of friendlyFighters) {
+    f.t++;
+    f.y += 1.7;
+    f.x += Math.sin(f.t * 0.09) * 0.55;
+
+    if (player.fighters.length === 1 && player.respawnTimer === 0 && f.y >= player.y - 10) {
+      const side = f.side;
+      // Dock beside the active fighter.
+      player.x += side * 6;
+      player.x = clamp(player.x, 14, WIDTH - 14);
+      player.fighters = [{ offset: -6 }, { offset: 6 }];
+      f.dead = true;
+      addExplosion(player.x, player.y, '#80ffff');
+    } else if (f.y > HEIGHT + 12) {
+      f.dead = true;
+    }
+  }
+  friendlyFighters = friendlyFighters.filter(f => !f.dead);
+}
+
+// ---------------------------------------------------------------------------
+// Global enemy firing
+// ---------------------------------------------------------------------------
+function updateEnemyFiring() {
+  if (readyTimer > 0) return;
+  if (player.fighters.length === 0) return;
+
+  enemyFireTimer--;
+  if (enemyFireTimer > 0) return;
+
+  const shooters = enemies.filter(e =>
+    !e.dead &&
+    (e.state === 'formation' || e.state === 'entry' || e.state === 'dive' || e.state === 'beam' || e.state === 'beamMove')
+  );
+
+  if (shooters.length) {
+    const e = shooters[randi(0, shooters.length - 1)];
+    enemyFire(e, e.state === 'dive' || e.state === 'beam' || e.state === 'beamMove');
+  }
+
+  enemyFireTimer = Math.max(24, 115 - game.stage * 5) + randi(0, 55);
+}
+
+// ---------------------------------------------------------------------------
+// Player update
+// ---------------------------------------------------------------------------
+function updatePlayer() {
+  if (player.fireCooldown > 0) player.fireCooldown--;
+  if (player.invuln > 0) player.invuln--;
+
+  if (player.respawnTimer > 0) {
+    player.respawnTimer--;
+    if (player.respawnTimer <= 0) {
+      player.x = 112;
+      player.fighters = [{ offset: 0 }];
+      player.invuln = 100;
+      readyTimer = 60;
+    }
+    return;
+  }
+
+  if (player.fighters.length === 0) return;
+
+  const speed = 2.25;
+  if (keys.left) player.x -= speed;
+  if (keys.right) player.x += speed;
+
+  const minX = player.fighters.length > 1 ? 14 : 8;
+  const maxX = player.fighters.length > 1 ? WIDTH - 14 : WIDTH - 8;
+  player.x = clamp(player.x, minX, maxX);
+
+  if (keys.fire) firePlayer();
+}
+
+// ---------------------------------------------------------------------------
+// Main update functions
+// ---------------------------------------------------------------------------
+function updatePlay() {
+  if (readyTimer > 0) readyTimer--;
+
+  updateFormation();
+  updatePlayer();
+
+  for (const e of enemies) updateEnemy(e);
+
+  updateBullets();
+  updateFriendlyFighters();
+  updateExplosions();
+  updateEnemyFiring();
+  tryStartDive();
+
+  collidePlayerBullets();
+  collideEnemyBullets();
+  collidePlayerWithEnemies();
+
+  enemies = enemies.filter(e => !e.dead);
+
+  if (game.gameOverTimer > 0) {
+    game.gameOverTimer--;
+    if (game.gameOverTimer <= 0) {
+      game.state = STATE.GAME_OVER;
+      game.stateTimer = 150;
+    }
+    return;
+  }
+
+  if (enemies.length === 0) {
+    game.state = STATE.STAGE_CLEAR;
+    game.stateTimer = 120;
+  }
+}
+
+function updateTitle() {
+  if (keys.enterPressed) {
+    keys.enterPressed = false;
+    resetGame();
+    startStage(1);
+  }
+}
+
+function updateStageIntro() {
+  game.stateTimer--;
+  if (game.stateTimer <= 0) beginStagePlay();
+}
+
+function updateChallengeIntro() {
+  game.stateTimer--;
+  if (game.stateTimer <= 0) beginChallengePlay();
+}
+
+function updateStageClear() {
+  game.stateTimer--;
+  updatePlayer();
+  updateBullets();
+  updateExplosions();
+  if (game.stateTimer <= 0) nextStage();
+}
+
+function updateChallengeResults() {
+  game.stateTimer--;
+  if (game.stateTimer <= 0) nextStage();
+}
+
+function updateGameOver() {
+  game.stateTimer--;
+  updateExplosions();
+  if (game.stateTimer <= 0) {
+    game.state = STATE.RESULTS;
+    game.stateTimer = 360;
+  }
+}
+
+function updateResults() {
+  game.stateTimer--;
+  if (keys.enterPressed) {
+    keys.enterPressed = false;
+    game.stateTimer = 0;
+  }
+  if (game.stateTimer <= 0) {
+    game.state = STATE.TITLE;
+  }
+}
+
+function update() {
+  tick++;
+  updateStars();
+
+  if (paused) return;
+
+  switch (game.state) {
+    case STATE.TITLE: updateTitle(); break;
+    case STATE.STAGE_INTRO: updateStageIntro(); break;
+    case STATE.PLAY: updatePlay(); break;
+    case STATE.STAGE_CLEAR: updateStageClear(); break;
+    case STATE.CHALLENGE_INTRO: updateChallengeIntro(); break;
+    case STATE.CHALLENGE: updateChallenge(); break;
+    case STATE.CHALLENGE_RESULTS: updateChallengeResults(); break;
+    case STATE.GAME_OVER: updateGameOver(); break;
+    case STATE.RESULTS: updateResults(); break;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+function enemySprite(e) {
+  if (e.type === 'zako') return SPR.zako[e.frame];
+  if (e.type === 'goei') return SPR.goei[e.frame];
+  if (e.type === 'boss') return e.hit ? SPR.bossHit[e.frame] : SPR.boss[e.frame];
+  if (e.type === 'hostile') return SPR.hostile;
+  return SPR.zako[0];
+}
+
+function drawEnemies() {
+  for (const e of enemies) {
+    if (e.state === 'entry' && e.entryDelay > 0) continue;
+
+    // Tractor beam behind boss.
+    if (e.state === 'beam') {
+      const len = 120;
+      for (let yy = 0; yy < len; yy += 2) {
+        const t = yy / len;
+        const w = Math.max(2, Math.round(lerp(10, 68, t)));
+        const stripe = ((Math.floor(yy / 2) + Math.floor(tick / 4)) % 2) === 0;
+        ctx.fillStyle = stripe ? '#00ffff' : '#0000ff';
+        ctx.globalAlpha = 0.75;
+        ctx.fillRect(Math.round(e.x - w / 2), Math.round(e.y + yy), w, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Captured fighter held above boss.
+    if (e.type === 'boss' && e.hasCaptured) {
+      drawSprite(SPR.captured, e.x, e.y - 15);
+    }
+
+    drawSprite(enemySprite(e), e.x, e.y);
+  }
+}
+
+function drawFriendlyFighters() {
+  for (const f of friendlyFighters) {
+    drawSprite(SPR.captured, f.x, f.y);
+  }
+}
+
+function drawPlayer() {
+  if (player.fighters.length === 0) return;
+  if (player.respawnTimer > 0) return;
+
+  const blink = player.invuln > 0 && (Math.floor(tick / 4) % 2 === 0);
+  const alpha = blink ? 0.35 : 1;
+
+  if (player.fighters.length === 1) {
+    drawSprite(SPR.player, player.x, player.y, alpha);
+  } else {
+    drawSprite(SPR.player, player.x + player.fighters[0].offset, player.y, alpha);
+    drawSprite(SPR.captured, player.x + player.fighters[1].offset, player.y, alpha);
+  }
+}
+
+function drawFlag(x, y, denom) {
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(x, y - 7, 1, 8);
+  ctx.fillStyle = '#ff0000';
+  ctx.fillRect(x + 1, y - 7, 8, 6);
+  drawText(String(denom), x + 5, y - 6, '#ffffff', 1, true);
+}
+
+function drawStageBadges(stage) {
+  const denoms = [50, 30, 20, 10, 5, 1];
+  const flags = [];
+  let n = stage;
+  for (const d of denoms) {
+    while (n >= d) {
+      flags.push(d);
+      n -= d;
+    }
+  }
+
+  let x = WIDTH - 10;
+  for (let i = flags.length - 1; i >= 0; i--) {
+    if (x < 125) break;
+    drawFlag(x, HEIGHT - 8, flags[i]);
+    x -= 10;
+  }
+}
+
+function drawHUD() {
+  // Black bars
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, WIDTH, 16);
+  ctx.fillRect(0, HEIGHT - 16, WIDTH, 16);
+
+  drawText('1UP', 16, 2, '#ff4040', 1);
+  drawText(String(game.score), 16, 9, '#ffffff', 1);
+
+  drawText('HIGH SCORE', WIDTH / 2, 2, '#40ffff', 1, true);
+  drawText(String(game.high), WIDTH / 2, 9, '#ffffff', 1, true);
+
+  // Reserve ships
+  const show = Math.min(game.reserve, 5);
+  for (let i = 0; i < show; i++) {
+    ctx.drawImage(SPR.player, 6 + i * 14, HEIGHT - 15);
+  }
+  if (game.reserve > 5) {
+    drawText('X' + (game.reserve - 5), 80, HEIGHT - 12, '#ffffff', 1);
+  }
+
+  drawStageBadges(game.stage);
+
+  if (muted) {
+    drawText('MUTE', WIDTH - 16, 2, '#808080', 1, true);
+  }
+}
+
+function drawExplosions() {
+  for (const ex of explosions) drawExplosion(ex);
+}
+
+function drawReady() {
+  if (readyTimer > 0 && game.state === STATE.PLAY) {
+    if (Math.floor(tick / 8) % 2 === 0) {
+      drawText('READY', WIDTH / 2, 150, '#ffff00', 2, true);
+    }
+  }
+}
+
+function drawTitle() {
+  drawText('GALAGA', WIDTH / 2, 18, '#40ffff', 4, true);
+  drawText('HIGH SCORE', WIDTH / 2, 48, '#ff4040', 1, true);
+  drawText(String(game.high), WIDTH / 2, 56, '#ffffff', 1, true);
+
+  drawText('SCORE TABLE', WIDTH / 2, 70, '#ffff00', 1, true);
+
+  drawSprite(SPR.zako[0], 45, 86);
+  drawText('ZAKO', 70, 82, '#ffffff', 1);
+  drawText('50  100', 120, 82, '#ffffff', 1);
+
+  drawSprite(SPR.goei[0], 45, 106);
+  drawText('GOEI', 70, 102, '#ffffff', 1);
+  drawText('80  160', 120, 102, '#ffffff', 1);
+
+  drawSprite(SPR.boss[0], 45, 126);
+  drawText('BOSS', 70, 122, '#ffffff', 1);
+  drawText('150 400', 120, 122, '#ffffff', 1);
+
+  drawText('ESCORT 800 1600', WIDTH / 2, 142, '#80ffff', 1, true);
+  drawText('DUAL FIGHTER', WIDTH / 2, 152, '#ff80ff', 1, true);
+
+  if (Math.floor(tick / 24) % 2 === 0) {
+    drawText('PRESS ENTER TO START', WIDTH / 2, 210, '#ffffff', 2, true);
+  }
+
+  drawText('ARROWS MOVE  SPACE FIRE', WIDTH / 2, 236, '#808080', 1, true);
+  drawText('P PAUSE  M MUTE', WIDTH / 2, 248, '#808080', 1, true);
+}
+
+function drawStageIntro() {
+  drawText('STAGE', WIDTH / 2, 120, '#40ffff', 2, true);
+  drawText(String(game.stage), WIDTH / 2, 142, '#ffffff', 3, true);
+}
+
+function drawChallengeIntro() {
+  drawText('CHALLENGING', WIDTH / 2, 116, '#ffff00', 2, true);
+  drawText('STAGE', WIDTH / 2, 138, '#ffff00', 2, true);
+}
+
+function drawChallengeResults() {
+  drawText('NUMBER OF HITS', WIDTH / 2, 90, '#ffffff', 2, true);
+  drawText(String(game.challengeTotalKills), WIDTH / 2, 116, '#ffff00', 3, true);
+  drawText('BONUS', WIDTH / 2, 146, '#ffffff', 2, true);
+  drawText(String(game.challengeBonus), WIDTH / 2, 168, '#40ffff', 2, true);
+  if (game.challengePerfect) {
+    if (Math.floor(tick / 8) % 2 === 0) {
+      drawText('PERFECT!', WIDTH / 2, 196, '#ff40ff', 2, true);
+    }
+  }
+}
+
+function drawGameOver() {
+  drawText('GAME OVER', WIDTH / 2, 120, '#ff4040', 3, true);
+}
+
+function drawResults() {
+  drawText('YOUR SCORE', WIDTH / 2, 64, '#ffffff', 2, true);
+  drawText(String(game.score), WIDTH / 2, 86, '#ffff00', 3, true);
+
+  drawText('SHOTS FIRED', WIDTH / 2, 126, '#ffffff', 2, true);
+  drawText(String(game.shots), WIDTH / 2, 148, '#40ffff', 2, true);
+
+  drawText('HITS', WIDTH / 2, 172, '#ffffff', 2, true);
+  drawText(String(game.hits), WIDTH / 2, 194, '#40ffff', 2, true);
+
+  const ratio = game.shots > 0 ? Math.floor((game.hits / game.shots) * 100) : 0;
+  drawText('RATIO', WIDTH / 2, 218, '#ffffff', 2, true);
+  drawText(ratio + '%', WIDTH / 2, 240, '#ff80ff', 2, true);
+
+  if (Math.floor(tick / 24) % 2 === 0) {
+    drawText('PRESS ENTER', WIDTH / 2, 264, '#808080', 1, true);
+  }
+}
+
+function render() {
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  drawStars();
+
+  if (game.state === STATE.TITLE) {
+    drawHUD();
+    drawTitle();
+    return;
+  }
+
+  drawEnemies();
+  drawFriendlyFighters();
+  drawPlayer();
+  drawBullets();
+  drawExplosions();
+  drawHUD();
+  drawReady();
+
+  if (game.state === STATE.STAGE_INTRO) drawStageIntro();
+  if (game.state === STATE.CHALLENGE_INTRO) drawChallengeIntro();
+  if (game.state === STATE.CHALLENGE_RESULTS) drawChallengeResults();
+  if (game.state === STATE.GAME_OVER) drawGameOver();
+  if (game.state === STATE.RESULTS) drawResults();
+
+  if (paused) {
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    drawText('PAUSE', WIDTH / 2, 130, '#ffffff', 3, true);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------------------
+window.addEventListener('keydown', (e) => {
+  initAudio();
+
+  if (['ArrowLeft', 'ArrowRight', 'Space', 'Enter'].includes(e.code)) e.preventDefault();
+
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+  if (e.code === 'Space') keys.fire = true;
+
+  if (e.key === 'Enter' && !e.repeat) {
+    keys.enterPressed = true;
+  }
+
+  if ((e.key === 'p' || e.key === 'P') && !e.repeat) {
+    if (game.state === STATE.PLAY || game.state === STATE.CHALLENGE) paused = !paused;
+  }
+
+  if ((e.key === 'm' || e.key === 'M') && !e.repeat) {
+    muted = !muted;
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+  if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+  if (e.code === 'Space') keys.fire = false;
+});
+
+// ---------------------------------------------------------------------------
+// Fixed timestep main loop
+// ---------------------------------------------------------------------------
+let lastTime = performance.now();
+let accumulator = 0;
+const STEP = 1000 / 60;
+
+function frame(now) {
+  requestAnimationFrame(frame);
+
+  let delta = now - lastTime;
+  lastTime = now;
+  if (delta > 250) delta = 250;
+
+  accumulator += delta;
+  while (accumulator >= STEP) {
+    update();
+    accumulator -= STEP;
+  }
+
+  render();
+}
+
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

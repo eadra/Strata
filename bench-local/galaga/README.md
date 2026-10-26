@@ -250,6 +250,132 @@ Against the 4090 round of the same 8 runs:
 - The two `off` games are the shortest of the whole test (255 and 407 lines): without thinking, the model writes a
   skeleton that touches every feature and runs almost none of it.
 
+## IQ3_S on the 5090 (2026-10-25, engine 0.1.51)
+
+The same 8 runs on IQ3_S, the next quant up (ISTA-DASLab, 87.7% top-token match with Q8_0 against IQ3_XXS's 84.5%),
+right after the IQ3_XXS round on the same machine. The IQ3_XXS server was stopped and `gen.py --prefix 5090- --quants
+IQ3_S` started its own from `strata-iq3_s.json`, rewritten to match the IQ3_XXS config of the day (131K context, KV
+int8 with streaming, vision on, CUDA 13.3; the old box's 262K config is kept as `strata-iq3_s-4090.json`). Server up
+in 61 s. **11,378 expert slots / 21.6 GB cache**, 389 MiB VRAM free, 47 GB arena in RAM, 15 pool workers. Same
+play-test and blind review (letters AA, AC, AH, AK-AO; the IQ3_XXS and IQ3_S reviewers were the same model, Claude Fable
+5.1, so the two 5090 rounds are comparable with each other).
+
+| run | score /76 | play checks /8 | severe bugs | verdict | out tokens | time | tok/s | html lines |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| off s1 | 3 | 2 | 6 | not playable (crash at load: a canvas passed where sprite rows are expected) | 11,926 | 0.9 min | 231 | 676 |
+| off s2 | 9 | 3 | 8 | not playable (crash on the first title frame: sprite frames collapsed to strings) | 10,220 | 0.7 min | 231 | 353 |
+| medium 16K s1 | 50 | 8 | 3 | barely playable (game over never returns to the title; aimed fire during fly-in; challenging stage soft-locks) | 30,555 | 2.0 min | 249 | 935 |
+| medium 16K s2 | 2 | 2 | 2 | not playable (syntax error: a stray `[ ]` in an object literal) | 31,188 | 2.0 min | 255 | 1,053 |
+| medium 32K s1 | 32 | 8 | 2 | not playable (the player ship is never set alive, so it never appears) | 44,316 | 3.3 min | 222 | 771 |
+| medium 32K s2 | 12 | 3 | 3 | not playable (assignment to a `const` on the first update: frozen on the title) | 45,550 | 2.9 min | 260 | 778 |
+| xhigh 32K s1 | **69** | 8 | 1 | **playable with flaws** (challenging stage soft-locks on the first hit) | 52,769 | 3.7 min | 240 | 2,109 |
+| xhigh 32K s2 | **70** | 8 | 0 | **playable with flaws** (9 minor bugs, no severe one) | 52,050 | 3.7 min | 236 | 2,088 |
+
+| same reviewers, same machine, same day | IQ3_XXS | IQ3_S |
+| --- | --- | --- |
+| mean score /76 | 48.4 | 30.9 |
+| best run | 70 | 70 |
+| plays well / playable with flaws | 0 of 8 | **2 of 8** (both xhigh 32K) |
+| barely playable | 4 of 8 | 1 of 8 |
+| crashed before gameplay | 3 of 8 | **5 of 8** (one syntax error, four exceptions at load or on the first frame) |
+| passed all 8 play checks | 4 of 8 | 4 of 8 |
+| decode, whole request | 238-257 tok/s | 222-260 tok/s |
+| time for the 8 runs | 18 min | 19 min |
+| expert slots on the card | 13,699 (56%) | 11,378 (46%) |
+
+- **Same speed as IQ3_XXS on this card.** The 5090's cache holds 46% of IQ3_S's experts instead of 56% of IQ3_XXS's,
+  and the whole-request rate is the same ~240 tok/s (the expert-cache hit rate drops from 98% to 97%, `pcie_share`
+  from 0.002 to 0.004). On the 4090 IQ3_S was 10-15% slower than IQ3_XXS; here the gap is gone.
+- **Two "playable with flaws" games, the first of the 5090 rounds, and both from xhigh 32K.** 69 and 70 points, 8 of 8
+  play checks, 0-1 severe bugs. The xhigh 32K s2 game is the only one in either 5090 round with no severe bug at all.
+  The IQ3_XXS xhigh games scored 61 and 67 with the same reviewers.
+- **Everything below xhigh is worse than IQ3_XXS's.** 5 of 8 crash before gameplay (IQ3_XXS: 3 of 8), and the mean is
+  pulled down to 30.9 by four games scored 2-12 for never running. Note that this round's reviewers scored crashed
+  games strictly (a syntax error gave 2/76, where the 4090 reviewers gave a comparable game 36 and this round's
+  IQ3_XXS reviewer gave one 60 for what the code would have done), so the means of crashed games are not comparable
+  across reviewers; count the crashes instead.
+- **The play-test again passed a game with no player ship** (medium 32K s1, 8 of 8 checks): the "moves" check sees the
+  enemies in the bottom strip. The code review caught it, as it did for IQ3_XXS medium 32K s2 on the 4090.
+- **Reading across the two 5090 rounds:** the xhigh 32K arm is 4 of the 16 games and holds 4 of the top 5 scores
+  (70, 69, 67, 61; the fifth is IQ3_XXS medium 32K s1 at 70), and every xhigh game ran through the play-test. The
+  budget and effort, not the quant, is the lever on this test; with 2 runs per arm the quant difference (2 of 8
+  against 0 of 8 playable, 5 against 3 crashes) is inside the noise, as the 4090 round concluded for 4 runs per quant.
+
+Games to hand-play: `out/5090-iq3_s-xhigh32k-s2.html` (70, no severe bug) and `out/5090-iq3_s-xhigh32k-s1.html` (69).
+
+## UD-Q4_K_XL on the 5090 with 64 GB (2026-10-25, engine 0.1.51)
+
+The same 8 runs on Unsloth's 4-bit UD-Q4_K_XL (93.1% top-token match with Q8_0), the quant that had the best mean and
+the best Strata game on the 4090 round. On this 64 GB machine it cannot keep its 72 GiB of experts in RAM, so the engine
+runs its **mapped mode with a RAM budget**: the hottest experts in RAM, the rest read from the GGUF on the SSD for every
+token ([UNSLOTH_Q4.md](../../docs/UNSLOTH_Q4.md)). Config `strata-unsloth-ud-q4_k_xl.json`, rewritten from the 96 GB
+box's (kept as `strata-unsloth-ud-q4_k_xl-4090.json`): `--resident-budget-gib 40` (the docs' rule, RAM less 24 GB),
+131K context, KV int8 with streaming, vision on, CUDA 13.3, the `STRATA_PARTIAL_PIN` env dropped (the docs measured it
+no faster). Server up in 40-51 s; **7,165-7,229 expert slots / 21 GB** on the card (29% of the experts), 15 pool
+workers. Same play-test and blind review (letters AP-AW, Claude Fable 5.1 reviewers like the other two 5090 rounds).
+
+**The RAM budget was clamped for the first four runs.** The engine log for the first start:
+
+```
+--resident-budget-gib 40.00 exceeds available commit (22.71 GiB minus 4 GiB headroom and a 0.25 GiB margin): 18.46 GiB
+```
+
+Windows caps committed memory at RAM plus the pagefile (63.4 + 28 GB, automatically managed), the engine process commits
+about 55 GB while touching 23, and the rest of the system had the remainder, so only 22.7 GB of commit was left for the
+expert budget. RAM in use was 43.5 of 63.4 GiB the whole time: Task Manager's "In use" is not the limit, "Committed" is.
+After the `off` and `medium 16K` runs the user set a fixed 64 GB pagefile (commit limit 127 GB) and rebooted; the
+generator resumed from `medium 32K s1` and the engine logged `RAM budget 40.00 GiB: 13704 of the 50.63 GiB of experts the
+GPU cache does not hold` (6,316 experts in RAM before). The games are the same test either way (the budget only decides
+whether an expert comes from RAM or the SSD); the times are not.
+
+| run | RAM budget | score /76 | play checks /8 | severe bugs | verdict | out tokens | time | tok/s | html lines |
+| --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| off s1 | 18.5 GiB | 35 | 8 | 4 | barely playable (formation `y` is NaN: enemies vanish on arrival; no enemy ever dives; corrupt bitmap font) | 14,772 | 7.0 min | 35 | 710 |
+| off s2 | 18.5 GiB | 23 | 8 | 5 | not playable (stuck on the STAGE 1 banner: the state never becomes playing, the player is never created) | 12,453 | 5.7 min | 37 | 533 |
+| medium 16K s1 | 18.5 GiB | **70** | 8 | **0** | **playable with flaws** (12 minor bugs) | 32,728 | 16.4 min | 33 | 1,083 |
+| medium 16K s2 | 18.5 GiB | 7 | 2 | 3 | not playable (crash at load: a leftover placeholder line builds a sprite from `undefined`) | 29,122 | 16.1 min | 30 | 848 |
+| medium 32K s1 | 40 GiB | 6 | 2 | 5 | not playable (crash at load: a field set on the game object before it exists) | 47,790 | 14.3 min | 56 | 954 |
+| medium 32K s2 | 40 GiB | 3 | 2 | 2 | not playable (crash at load: an undeclared variable in the sprite builder) | 44,844 | 15.0 min | 50 | 760 |
+| xhigh 32K s1 | 40 GiB | **65** | 8 | 1 | **playable with flaws** (challenging stage soft-locks after any hit) | 51,089 | 16.3 min | 52 | 2,002 |
+| xhigh 32K s2 | 40 GiB | **60** | 8 | 2 | **playable with flaws** (the tractor beam can never capture; the player is frozen in challenging stages) | 52,205 | 16.6 min | 52 | 1,958 |
+
+| same reviewers, same machine, same day | IQ3_XXS | IQ3_S | UD-Q4_K_XL |
+| --- | --- | --- | --- |
+| mean score /76 | 48.4 | 30.9 | 33.6 |
+| best run | 70 | 70 | 70 |
+| plays well / playable with flaws | 0 of 8 | 2 of 8 | **3 of 8** |
+| barely playable | 4 of 8 | 1 of 8 | 1 of 8 |
+| crashed at load or on start | 3 of 8 | 5 of 8 | 3 of 8 (all three at load) |
+| passed all 8 play checks | 4 of 8 | 4 of 8 | 5 of 8 |
+| decode, whole request | 238-257 tok/s | 222-260 tok/s | 30-37 (18.5 GiB) / 50-56 (40 GiB) tok/s |
+| time for the 8 runs | 18 min | 19 min | 107 min |
+| expert slots on the card | 13,699 (56%) | 11,378 (46%) | 7,229 (29%) |
+| games with no severe bug | 0 | 1 | 1 |
+
+- **Speed: 5x slower than the IQ3 quants here, and no slower than on the 96 GB 4090 box.** With the 40 GiB budget
+  UD-Q4_K_XL decodes at 50-56 tok/s over a whole request; the 4090 with every expert in RAM did 45-54. The 5090's larger
+  cache (7,229 experts on the card against 5,010 on the 4090 for this file) makes up for the SSD reads. At the
+  clamped 18.5 GiB budget it was 30-37 tok/s, so **the pagefile change was worth 1.6x**. Per request the engine read
+  780-850 GB of expert data from the SSD (`file_mb` in the run records), which the OS file cache serves in part; the
+  SSD is part of the speed here.
+- **Quality: the most "playable with flaws" of the three quants, 3 of 8, and again all from thinking runs.** The medium
+  16K s1 game is the best-rated of the whole 5090 test together with two 70s from the other quants, and the only one of
+  its arm in any 5090 round with no severe bug. Both xhigh 32K games run. The 32K medium runs both crashed at load, as
+  did medium 16K s2: three leftover or half-edited lines (`mkSprite(SPR.zako[0]?undefined:undefined)`, `G.stars=[]`
+  before `G` exists, a `{c,w,h}` with `h` never declared), the same failure shape as the other quants, one typo away
+  from a running game.
+- **The quants still cannot be ranked.** 3, 2 and 0 "playable with flaws" out of 8, with 3, 5 and 3 crashes, and the
+  same best score (70) for all three. That is what 2 runs per arm looks like: the thinking budget moves the result more
+  than the quant does (across the three rounds, 7 games scored above 60: 6 from the 32K-thinking arms and 1 from medium 16K; the best
+  `off` game scored 35).
+- **The play-test passed two broken games** (off s1 and s2): enemies that vanish on arrival, and a STAGE 1 banner that
+  never ends, both still animate the canvas. The code review carries the verdict, as in every round.
+- **Not comparable with the 4090 UD-Q4 round** (1 of 4 playable, best 71): different reviewers, 4 runs, all experts in
+  RAM there, and the seeds do not reproduce across engine versions.
+
+Games to hand-play: `out/5090-unsloth-ud-q4_k_xl-medium-s1.html` (70, no severe bug), `out/5090-unsloth-ud-q4_k_xl-xhigh32k-s1.html`
+(65) and `out/5090-unsloth-ud-q4_k_xl-xhigh32k-s2.html` (60).
+
 ## What this does and does not show
 
 - **One-shot, this task is mostly failed by every quant: 2 playable games out of 12.** 7 of 12 never reach gameplay:
@@ -287,6 +413,8 @@ Against the 4090 round of the same 8 runs:
 ```bash
 ../../.venv/Scripts/python.exe gen.py                       # ~70 min: 3 server starts, 12 generations
 ../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants IQ3_XXS --arms off,medium,medium32k,xhigh32k  # against a running server
+../../.venv/Scripts/python.exe gen.py --prefix 5090- --quants IQ3_S --arms off,medium,medium32k,xhigh32k                # starts its own server
+../../.venv/Scripts/python.exe gen.py --prefix 5090- --quants unsloth-ud-q4_k_xl --arms off,medium,medium32k,xhigh32k   # ~110 min on 64 GB (SSD-mapped)
 python -m venv pw && pw/Scripts/pip install playwright pillow
 pw/Scripts/python.exe playtest.py && pw/Scripts/python.exe sheet.py
 python stats.py && python blind.py                          # then review each review/<letter>/ against rubric.md
