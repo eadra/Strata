@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Galaga</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="224" height="288"></canvas>
+<script>
+(() => {
+  'use strict';
+
+  // ---------------------------------------------------------------------------
+  // Constants
+  // ---------------------------------------------------------------------------
+  const W = 224;
+  const H = 288;
+  const STEP = 1 / 60;
+  const PLAYER_Y = 252;
+  const PLAYER_SPEED = 100;
+  const SHOT_SPEED = 240;
+  const ENEMY_BULLET_SPEED = 100;
+  const FORMATION_CENTER = 112;
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  // ---------------------------------------------------------------------------
+  // Tiny 5x7 pixel font
+  // ---------------------------------------------------------------------------
+  const FONT = {
+    ' ': ['00000','00000','00000','00000','00000','00000','00000'],
+    '0': ['01110','10001','10011','10101','11001','10001','01110'],
+    '1': ['00100','01100','00100','00100','00100','00100','01110'],
+    '2': ['01110','10001','00001','00010','00100','01000','11111'],
+    '3': ['11110','00001','00001','01110','00001','00001','11110'],
+    '4': ['00010','00110','01010','10010','11111','00010','00010'],
+    '5': ['11111','10000','10000','11110','00001','00001','11110'],
+    '6': ['01110','10000','10000','11110','10001','10001','01110'],
+    '7': ['11111','00001','00010','00100','01000','01000','01000'],
+    '8': ['01110','10001','10001','01110','10001','10001','01110'],
+    '9': ['01110','10001','10001','01111','00001','00001','01110'],
+    'A': ['01110','10001','10001','11111','10001','10001','10001'],
+    'B': ['11110','10001','10001','11110','10001','10001','11110'],
+    'C': ['01110','10001','10000','10000','10000','10001','01110'],
+    'D': ['11110','10001','10001','10001','10001','10001','11110'],
+    'E': ['11111','10000','10000','11110','10000','10000','11111'],
+    'F': ['11111','10000','10000','11110','10000','10000','10000'],
+    'G': ['01110','10001','10000','10111','10001','10001','01110'],
+    'H': ['10001','10001','10001','11111','10001','10001','10001'],
+    'I': ['11111','00100','00100','00100','00100','00100','11111'],
+    'J': ['00111','00010','00010','00010','00010','10010','01100'],
+    'K': ['10001','10010','10100','11000','10100','10010','10001'],
+    'L': ['10000','10000','10000','10000','10000','10000','11111'],
+    'M': ['10001','11011','10101','10101','10001','10001','10001'],
+    'N': ['10001','11001','10101','10011','10001','10001','10001'],
+    'O': ['01110','10001','10001','10001','10001','10001','01110'],
+    'P': ['11110','10001','10001','11110','10000','10000','10000'],
+    'Q': ['01110','10001','10001','10001','10101','10010','01101'],
+    'R': ['11110','10001','10001','11110','10100','10010','10001'],
+    'S': ['01111','10000','10000','01110','00001','00001','11110'],
+    'T': ['11111','00100','00100','00100','00100','00100','00100'],
+    'U': ['10001','10001','10001','10001','10001','10001','01110'],
+    'V': ['10001','10001','10001','10001','10001','01010','00100'],
+    'W': ['10001','10001','10001','10101','10101','11011','10001'],
+    'X': ['10001','10001','01010','00100','01010','10001','10001'],
+    'Y': ['10001','10001','01010','00100','00100','00100','00100'],
+    'Z': ['11111','00001','00010','00100','01000','10000','11111'],
+    '!': ['00100','00100','00100','00100','00100','00000','00100'],
+    '%': ['11001','11010','00100','00100','01011','10011','00000'],
+    '.': ['00000','00000','00000','00000','00000','00100','00100'],
+    '-': ['00000','00000','00000','11111','00000','00000','00000'],
+    '/': ['00001','00010','00100','00100','01000','10000','00000'],
+    ':': ['00000','00100','00100','00000','00100','00100','00000'],
+    '?': ['01110','10001','00001','00010','00100','00000','00100'],
+    ',': ['00000','00000','00000','00000','00100','00100','01000'],
+    '+': ['00000','00100','00100','11111','00100','00100','00000'],
+    '=': ['00000','00000','11111','00000','11111','00000','00000'],
+    '(': ['00010','00100','01000','01000','01000','00100','00010'],
+    ')': ['01000','00100','00010','00010','00010','00100','01000']
+  };
+
+  function drawText(text, x, y, color, scale = 1, spacing = 1, align = 'left') {
+    text = String(text).toUpperCase();
+    const charW = 5 * scale;
+    const gap = spacing * scale;
+    const totalW = text.length * charW + Math.max(0, text.length - 1) * gap;
+    if (align === 'center') x -= totalW / 2;
+    if (align === 'right') x -= totalW;
+    for (let i = 0; i < text.length; i++) {
+      const glyph = FONT[text[i]] || FONT[' '];
+      for (let row = 0; row < 7; row++) {
+        for (let col = 0; col < 5; col++) {
+          if (glyph[row][col] === '1') {
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.round(x + i * (charW + gap) + col * scale),
+                         Math.round(y + row * scale),
+                         scale, scale);
+          }
+        }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sprite data and pre-rendered sprites
+  // ---------------------------------------------------------------------------
+  function makeSprite(pixels, palette) {
+    const h = pixels.length;
+    const w = pixels[0].length;
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d');
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        const ch = pixels[y][x];
+        if (ch === '.' || ch === ' ') continue;
+        g.fillStyle = palette[ch] || '#fff';
+        g.fillRect(x, y, 1, 1);
+      }
+    }
+    return c;
+  }
+
+  // Player ship
+  const playerPixels = [
+    '....W......',
+    '...WWW.....',
+    '..WWWWW....',
+    '.RR.W.RR...',
+    'RR..W..RR..',
+    'RR..W..RR..',
+    '....W......',
+    '....W......'
+  ];
+  const playerSprite = makeSprite(playerPixels, {
+    W: '#e8f4ff',
+    R: '#ff4a4a'
+  });
+  const capturedSprite = makeSprite(playerPixels, {
+    W: '#ff3b3b',
+    R: '#8a1010'
+  });
+
+  // Zako
+  const zakoFrame0 = [
+    '....B.B....',
+    '...BBBBB...',
+    '..BB.Y.BB..',
+    '.BB.YYY.BB.',
+    '..BB.Y.BB..',
+    '...BBBBB...',
+    '....B.B....',
+    '...........'
+  ];
+  const zakoFrame1 = [
+    '...B...B...',
+    '..BBBBBBB..',
+    '.BB.YYY.BB.',
+    'BB..YYY..BB',
+    '.BB.YYY.BB.',
+    '..BBBBBBB..',
+    '...B...B...',
+    '...........'
+  ];
+  const zakoSprite0 = makeSprite(zakoFrame0, { B: '#4aa3ff', Y: '#ffe34a' });
+  const zakoSprite1 = makeSprite(zakoFrame1, { B: '#4aa3ff', Y: '#ffe34a' });
+
+  // Goei
+  const goeiFrame0 = [
+    '..R.....R....',
+    '.RRR...RRR...',
+    'RRRRR.RRRRR..',
+    'RRR.RRR.RRR..',
+    '.RR.RRR.RR...',
+    '..R.RRR.R....',
+    '...RRRRR.....',
+    '....R.R......',
+    '.............'
+  ];
+  const goeiFrame1 = [
+    '.R.......R...',
+    'RRR.....RRR..',
+    'RRRRR.RRRRR..',
+    'RRR.RRR.RRR..',
+    '.RR.RRR.RR...',
+    '..R.RRR.R....',
+    '...RRRRR.....',
+    '....R.R......',
+    '.............'
+  ];
+  const goeiSprite0 = makeSprite(goeiFrame0, { R: '#ff4a4a' });
+  const goeiSprite1 = makeSprite(goeiFrame1, { R: '#ff4a4a' });
+
+  // Boss Galaga
+  const bossFrame0 = [
+    '....G.....G....',
+    '...GGG...GGG...',
+    '..GGGGG.GGGGG..',
+    '.GGG.GGGGG.GGG.',
+    'GGG..YYGGG..GGG',
+    'GGG..YYGGG..GGG',
+    '.GGG.GGGGG.GGG.',
+    '..GGGGG.GGGGG..',
+    '...GGG...GGG...',
+    '....G.....G....',
+    '...............'
+  ];
+  const bossFrame1 = [
+    '...G.......G...',
+    '..GGG.....GGG..',
+    '.GGGGG...GGGGG.',
+    'GGGG.GGGGG.GGGG',
+    'GGG..YYGGG..GGG',
+    'GGG..YYGGG..GGG',
+    'GGGG.GGGGG.GGGG',
+    '.GGGGG...GGGGG.',
+    '..GGG.....GGG..',
+    '...G.......G...',
+    '...............'
+  ];
+  const bossSprite0 = makeSprite(bossFrame0, { G: '#35d04a', Y: '#ffe34a' });
+  const bossSprite1 = makeSprite(bossFrame1, { G: '#35d04a', Y: '#ffe34a' });
+  const bossHitSprite0 = makeSprite(bossFrame0, { G: '#6b5cff', Y: '#ffe34a' });
+  const bossHitSprite1 = makeSprite(bossFrame1, { G: '#6b5cff', Y: '#ffe34a' });
+
+  // Explosions
+  const explosionPixels = [
+    [
+      '....Y....',
+      '...YOY...',
+      '..YOOOY..',
+      '.YOOROYY.',
+      '..YOOOY..',
+      '...YOY...',
+      '....Y....'
+    ],
+    [
+      '...YYY...',
+      '..YOOOY..',
+      '.YOOROYY.',
+      'YORRRROY.',
+      '.YOOROYY.',
+      '..YOOOY..',
+      '...YYY...'
+    ],
+    [
+      '..YY.YY..',
+      '.YOOROYY.',
+      'YORRRROY.',
+      'ORRRRRRO.',
+      'YORRRROY.',
+      '.YOOROYY.',
+      '..YY.YY..'
+    ],
+    [
+      '..Y...Y..',
+      '.Y.....Y.',
+      'Y.......Y',
+      '.........',
+      'Y.......Y',
+      '.Y.....Y.',
+      '..Y...Y..'
+    ]
+  ];
+  const enemyExplosionFrames = explosionPixels.map(p => makeSprite(p, {
+    Y: '#ffe34a', O: '#ff8a2a', R: '#ff3b3b'
+  }));
+  const playerExplosionFrames = explosionPixels.map(p => makeSprite(p, {
+    Y: '#ffffff', O: '#66ccff', R: '#ff4a4a'
+  }));
+
+  // ---------------------------------------------------------------------------
+  // Formation slots
+  // ---------------------------------------------------------------------------
+  const SLOT_DEFS = [];
+  // Boss row: 4
+  for (let i = 0; i < 4; i++) {
+    SLOT_DEFS.push({ type: 'boss', x: 76 + i * 24, y: 52 });
+  }
+  // Goei rows: 2 x 8
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 8; i++) {
+      SLOT_DEFS.push({ type: 'goei', x: 56 + i * 16, y: 70 + row * 18 });
+    }
+  }
+  // Zako rows: 2 x 10
+  for (let row = 0; row < 2; row++) {
+    for (let i = 0; i < 10; i++) {
+      SLOT_DEFS.push({ type: 'zako', x: 40 + i * 16, y: 106 + row * 18 });
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Audio
+  // ---------------------------------------------------------------------------
+  let audioCtx = null;
+  let masterGain = null;
+
+  function initAudio() {
+    if (audioCtx) return;
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.25;
+      masterGain.connect(audioCtx.destination);
+    } catch (e) {
+      audioCtx = null;
+    }
+  }
+
+  function playTone(freq, dur, type = 'square', vol = 0.2, slideTo = null, delay = 0) {
+    if (!audioCtx || game.muted) return;
+    const t = audioCtx.currentTime + delay;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (slideTo !== null) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, slideTo), t + dur);
+    }
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    osc.connect(gain);
+    gain.connect(masterGain);
+    osc.start(t);
+    osc.stop(t + dur);
+  }
+
+  function playNoise(dur, vol = 0.2, filterFreq = 1000) {
+    if (!audioCtx || game.muted) return;
+    const size = Math.max(1, Math.floor(audioCtx.sampleRate * dur));
+    const buffer = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = filterFreq;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    src.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGain);
+    src.start();
+  }
+
+  function sfxShoot() {
+    playTone(800, 0.05, 'square', 0.12, 300);
+  }
+  function sfxEnemyHit() {
+    playTone(420, 0.05, 'square', 0.1, 180);
+  }
+  function sfxEnemyDestroyed() {
+    playNoise(0.18, 0.18, 900);
+    playTone(220, 0.12, 'sawtooth', 0.08, 60);
+  }
+  function sfxBossHit() {
+    playTone(300, 0.08, 'square', 0.12, 120);
+    playNoise(0.06, 0.08, 1200);
+  }
+  function sfxPlayerExplosion() {
+    playNoise(0.45, 0.3, 500);
+    playTone(120, 0.3, 'sawtooth', 0.12, 40);
+  }
+  function sfxTractorBeam() {
+    playTone(100, 0.8, 'sawtooth', 0.1, 260);
+    playTone(140, 0.8, 'square', 0.05, 180, 0.05);
+  }
+  function sfxStageStart() {
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((f, i) => playTone(f, 0.1, 'square', 0.12, null, i * 0.12));
+  }
+  function sfxExtraShip() {
+    playTone(1000, 0.08, 'square', 0.12, 1500);
+    playTone(1500, 0.12, 'square', 0.1, 2000, 0.08);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Game state
+  // ---------------------------------------------------------------------------
+  const game = {
+    state: 'title',
+    time: 0,
+    paused: false,
+    muted: false,
+    score: 0,
+    highScore: 0,
+    stage: 1,
+    reserve: 2,
+    player: {
+      x: 112,
+      y: PLAYER_Y,
+      active: false,
+      dual: false
+    },
+    playerRespawning: false,
+    respawnTimer: 0,
+    readyFlash: 0,
+    pendingDock: false,
+    shotsFired: 0,
+    hits: 0,
+    enemies: [],
+    playerShots: [],
+    enemyBullets: [],
+    explosions: [],
+    freedShips: [],
+    stageTime: 0,
+    formationComplete: false,
+    diveTimer: 0,
+    fireCooldown: 0,
+    stageIntroTimer: 0,
+    gameOverTimer: 0,
+    challengeResultsTimer: 0,
+    challengeHits: 0,
+    challengeWaveHits: [0, 0, 0, 0, 0],
+    challengeBonus: 0,
+    nextExtraScore: 20000,
+    stars: []
+  };
+
+  // High score
+  try {
+    const saved = localStorage.getItem('galagaHighScore');
+    if (saved) game.highScore = parseInt(saved, 10) || 0;
+  } catch (e) {}
+
+  function saveHighScore() {
+    try {
+      localStorage.setItem('galagaHighScore', String(game.highScore));
+    } catch (e) {}
+  }
+
+  // ---------------------------------------------------------------------------
+  // Starfield
+  // ---------------------------------------------------------------------------
+  const STAR_COLORS = ['#ffffff', '#9fe8ff', '#ffe34a', '#ff8a8a', '#8a9dff'];
+  for (let i = 0; i < 90; i++) {
+    game.stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      speed: 8 + Math.random() * 28,
+      size: Math.random() < 0.25 ? 2 : 1,
+      color: STAR_COLORS[Math.floor(Math.random() * STAR_COLORS.length)],
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+  function clamp(v, lo, hi) {
+    return Math.max(lo, Math.min(hi, v));
+  }
+
+  function bezier(p0, p1, p2, p3, t) {
+    const u = 1 - t;
+    return {
+      x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+      y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y
+    };
+  }
+
+  function formationOffset(slot, time) {
+    const sway = 8 * Math.sin(time * 1.2);
+    const breathe = game.formationComplete ? 0.08 * Math.sin(time * 1.6) : 0;
+    const x = slot.x + sway + (slot.x - FORMATION_CENTER) * breathe;
+    const y = slot.y + (game.formationComplete ? 2 * Math.sin(time * 1.6 + 1) : 0);
+    return { x, y };
+  }
+
+  function makeEntryPath(slot, group, order) {
+    const side = group % 2 === 0 ? 'left' : 'right';
+    const start = {
+      x: side === 'left' ? -20 : W + 20,
+      y: 30 + (order % 3) * 20 + Math.random() * 12
+    };
+    const end = { x: slot.x, y: slot.y };
+    const c1 = {
+      x: start.x + (end.x - start.x) * 0.3,
+      y: start.y + 30
+    };
+    const c2 = {
+      x: start.x + (end.x - start.x) * 0.7,
+      y: end.y - 30
+    };
+    return { start, c1, c2, end };
+  }
+
+  function makeDivePath(start, targetX, endY = 310) {
+    const end = { x: targetX, y: endY };
+    const c1 = {
+      x: start.x + (targetX - start.x) * 0.2,
+      y: start.y + 60
+    };
+    const c2 = {
+      x: start.x + (targetX - start.x) * 0.8,
+      y: start.y + 140
+    };
+    return { start, c1, c2, end };
+  }
+
+  function makeReturnPath(start, end) {
+    const midY = (start.y + end.y) / 2;
+    return {
+      start,
+      c1: { x: start.x, y: midY },
+      c2: { x: end.x, y: midY },
+      end
+    };
+  }
+
+  function makeChallengePath(wave, index) {
+    const side = wave % 2 === 0 ? 'left' : 'right';
+    const start = {
+      x: side === 'left' ? -20 : W + 20,
+      y: 40 + index * 8
+    };
+    const end = {
+      x: side === 'left' ? W + 20 : -20,
+      y: 80 + index * 8
+    };
+    const c1 = {
+      x: side === 'left' ? 60 : 164,
+      y: 20 + index * 10
+    };
+    const c2 = {
+      x: side === 'left' ? 164 : 60,
+      y: 260 - index * 10
+    };
+    return { start, c1, c2, end };
+  }
+
+  function enemyHalfSize(type) {
+    if (type === 'boss') return { w: 7, h: 5 };
+    if (type === 'goei') return { w: 6, h: 4 };
+    return { w: 5, h: 4 };
+  }
+
+  function playerHalfSize() {
+    return { w: 5, h: 4 };
+  }
+
+  function aabb(a, b) {
+    return Math.abs(a.x - b.x) < a.w + b.w && Math.abs(a.y - b.y) < a.h + b.h;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Score / extra ships
+  // ---------------------------------------------------------------------------
+  function addScore(points) {
+    game.score += points;
+    if (game.score > game.highScore) {
+      game.highScore = game.score;
+      saveHighScore();
+    }
+    while (game.score >= game.nextExtraScore) {
+      game.reserve++;
+      game.nextExtraScore += 70000;
+      sfxExtraShip();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Player
+  // ---------------------------------------------------------------------------
+  function resetPlayer() {
+    game.player.x = 112;
+    game.player.y = PLAYER_Y;
+    game.player.active = true;
+    game.player.dual = false;
+    game.playerRespawning = false;
+    game.respawnTimer = 0;
+    game.readyFlash = 0.5;
+    if (game.pendingDock) {
+      game.player.dual = true;
+      game.pendingDock = false;
+    }
+  }
+
+  function firePlayerShot() {
+    if (!game.player.active || game.paused) return;
+    if (game.player.dual) {
+      if (game.playerShots.length + 2 > 2) return;
+      game.playerShots.push({ x: game.player.x - 6, y: PLAYER_Y - 8, vy: -SHOT_SPEED });
+      game.playerShots.push({ x: game.player.x + 6, y: PLAYER_Y - 8, vy: -SHOT_SPEED });
+      game.shotsFired += 2;
+    } else {
+      if (game.playerShots.length >= 2) return;
+      game.playerShots.push({ x: game.player.x, y: PLAYER_Y - 8, vy: -SHOT_SPEED });
+      game.shotsFired += 1;
+    }
+    sfxShoot();
+  }
+
+  function losePlayerShip(hitX, hitY, hitHalf) {
+    const px = hitX !== undefined ? hitX : game.player.x;
+    const py = hitY !== undefined ? hitY : game.player.y;
+
+    game.explosions.push({
+      x: px,
+      y: py,
+      timer: 0.35,
+      duration: 0.35,
+      type: 'player'
+    });
+    sfxPlayerExplosion();
+
+    if (game.player.dual) {
+      // Lose one half only.
+      if (hitHalf === 'left') {
+        game.player.x += 6;
+      } else if (hitHalf === 'right') {
+        game.player.x -= 6;
+      } else {
+        // Fallback: lose the half nearest the hit.
+        if (px < game.player.x) game.player.x += 6;
+        else game.player.x -= 6;
+      }
+      game.player.dual = false;
+      return;
+    }
+
+    game.player.active = false;
+    if (game.reserve > 0) {
+      game.reserve--;
+      game.playerRespawning = true;
+      game.respawnTimer = 1.5;
+      game.readyFlash = 0;
+    } else {
+      gameOver();
+    }
+  }
+
+  function gameOver() {
+    game.state = 'gameOver';
+    game.gameOverTimer = 5.0;
+    game.player.active = false;
+    game.player.dual = false;
+    saveHighScore();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Enemies
+  // ---------------------------------------------------------------------------
+  function createEnemy(type, slotIndex, entryStartTime) {
+    const slot = SLOT_DEFS[slotIndex];
+    const group = Math.floor(slotIndex / 8);
+    const order = slotIndex % 8;
+    const entryPath = makeEntryPath(slot, group, order);
+    return {
+      type,
+      slotIndex,
+      x: slot.x,
+      y: slot.y,
+      hp: type === 'boss' ? 2 : 1,
+      hitColor: false,
+      frame: 0,
+      state: 'entering',
+      alive: true,
+      entryStartTime,
+      entryDuration: 1.6,
+      entryPath,
+      fireCooldown: 0.8 + Math.random() * 1.2,
+      diveT: 0,
+      diveDuration: 1.8,
+      divePath: null,
+      returnT: 0,
+      returnDuration: 1.5,
+      returnPath: null,
+      captive: null,
+      captiveFireTimer: 0,
+      escorts: [],
+      bossRef: null,
+      beamActive: false,
+      beamTimer: 0,
+      challengeStartTime: 0,
+      challengeDuration: 4.0,
+      challengePath: null,
+      challengeWave: 0
+    };
+  }
+
+  function startRegularStage() {
+    game.state = 'playing';
+    game.stageTime = 0;
+    game.formationComplete = false;
+    game.diveTimer = 1.5;
+    game.enemies = [];
+    game.playerShots = [];
+    game.enemyBullets = [];
+    game.explosions = [];
+    game.freedShips = [];
+    game.challengeHits = 0;
+    game.challengeBonus = 0;
+
+    for (let i = 0; i < 40; i++) {
+      const group = Math.floor(i / 8);
+      const order = i % 8;
+      const entryStartTime = group * 0.8 + order * 0.08 + Math.random() * 0.1;
+      game.enemies.push(createEnemy(SLOT_DEFS[i].type, i, entryStartTime));
+    }
+  }
+
+  function startChallengingStage() {
+    game.state = 'challenging';
+    game.stageTime = 0;
+    game.enemies = [];
+    game.playerShots = [];
+    game.enemyBullets = [];
+    game.explosions = [];
+    game.freedShips = [];
+    game.challengeHits = 0;
+    game.challengeWaveHits = [0, 0, 0, 0, 0];
+    game.challengeBonus = 0;
+
+    for (let wave = 0; wave < 5; wave++) {
+      for (let i = 0; i < 8; i++) {
+        const e = createEnemy('zako', 0, 0);
+        e.type = (wave % 3 === 0) ? 'zako' : (wave % 3 === 1 ? 'goei' : 'boss');
+        e.hp = e.type === 'boss' ? 2 : 1;
+        e.state = 'challenging';
+        e.challengeWave = wave;
+        e.challengeStartTime = wave * 2.5 + i * 0.1;
+        e.challengeDuration = 4.0;
+        e.challengePath = makeChallengePath(wave, i);
+        e.x = -100;
+        e.y = -100;
+        game.enemies.push(e);
+      }
+    }
+  }
+
+  function startStage(stage) {
+    game.stage = stage;
+    game.stageTime = 0;
+    game.formationComplete = false;
+    game.diveTimer = 1.5;
+    game.playerShots = [];
+    game.enemyBullets = [];
+    game.explosions = [];
+    game.freedShips = [];
+    game.challengeHits = 0;
+    game.challengeBonus = 0;
+
+    if (stage % 4 === 3) {
+      startChallengingStage();
+    } else {
+      startRegularStage();
+    }
+  }
+
+  function startGame() {
+    game.score = 0;
+    game.stage = 1;
+    game.reserve = 2;
+    game.shotsFired = 0;
+    game.hits = 0;
+    game.nextExtraScore = 20000;
+    game.player.active = false;
+    game.player.dual = false;
+    game.playerRespawning = false;
+    game.pendingDock = false;
+    game.enemies = [];
+    game.playerShots = [];
+    game.enemyBullets = [];
+    game.explosions = [];
+    game.freedShips = [];
+    game.paused = false;
+    game.state = 'stageIntro';
+    game.stageIntroTimer = 2.0;
+    sfxStageStart();
+  }
+
+  function scheduleDive() {
+    if (game.playerRespawning || !game.player.active) return;
+
+    const candidates = game.enemies.filter(e => e.alive && e.state === 'formation');
+    if (candidates.length === 0) return;
+
+    const activeDivers = game.enemies.filter(e => e.alive &&
+      (e.state === 'diving' || e.state === 'returning' || e.state === 'tractor' || e.state === 'tractorStopped')).length;
+    if (activeDivers >= 3) return;
+
+    const enemy = candidates[Math.floor(Math.random() * candidates.length)];
+
+    if (enemy.type === 'boss') {
+      const tractorChance = 0.2 + Math.min(0.3, game.stage * 0.025);
+      if (Math.random() < tractorChance) {
+        startTractorDive(enemy);
+      } else {
+        startBossDive(enemy);
+      }
+    } else {
+      startNormalDive(enemy);
+    }
+  }
+
+  function startNormalDive(enemy) {
+    const start = { x: enemy.x, y: enemy.y };
+    const targetX = game.player.x + (Math.random() * 40 - 20);
+    enemy.state = 'diving';
+    enemy.divePath = makeDivePath(start, targetX, 310);
+    enemy.diveT = 0;
+    enemy.diveDuration = 1.8;
+    enemy.fireCooldown = 0.4 + Math.random() * 0.5;
+  }
+
+  function startBossDive(boss) {
+    let escortCount = 0;
+    if (Math.random() < 0.55) escortCount = 1;
+    if (game.stage >= 5 && Math.random() < 0.35) escortCount = 2;
+
+    const goeiCandidates = game.enemies.filter(e =>
+      e.alive && e.type === 'goei' && e.state === 'formation'
+    );
+    const escorts = [];
+    for (let i = 0; i < escortCount && goeiCandidates.length > 0; i++) {
+      const idx = Math.floor(Math.random() * goeiCandidates.length);
+      escorts.push(goeiCandidates.splice(idx, 1)[0]);
+    }
+
+    const targetX = game.player.x + (Math.random() * 30 - 15);
+    const start = { x: boss.x, y: boss.y };
+    boss.state = 'diving';
+    boss.divePath = makeDivePath(start, targetX, 310);
+    boss.diveT = 0;
+    boss.diveDuration = 1.8;
+    boss.fireCooldown = 0.6 + Math.random() * 0.5;
+    boss.escorts = escorts;
+
+    for (const e of escorts) {
+      const s = { x: e.x, y: e.y };
+      const tx = targetX + (Math.random() * 30 - 15);
+      e.state = 'diving';
+      e.divePath = makeDivePath(s, tx, 310);
+      e.diveT = 0;
+      e.diveDuration = boss.diveDuration;
+      e.fireCooldown = 0.6 + Math.random() * 0.5;
+      e.bossRef = boss;
+    }
+
+    if (boss.captive) boss.captiveFireTimer = 0.4;
+  }
+
+  function startTractorDive(boss) {
+    const start = { x: boss.x, y: boss.y };
+    const end = { x: boss.x, y: 170 };
+    boss.state = 'tractor';
+    boss.divePath = {
+      start,
+      c1: { x: boss.x, y: boss.y + 40 },
+      c2: { x: boss.x, y: boss.y + 80 },
+      end
+    };
+    boss.diveT = 0;
+    boss.diveDuration = 1.2;
+    boss.beamActive = false;
+    boss.beamTimer = 0;
+    if (boss.captive) boss.captiveFireTimer = 0.4;
+  }
+
+  function fireEnemyBullet(enemy) {
+    if (!game.player.active) return;
+    const dx = game.player.x - enemy.x;
+    const dy = PLAYER_Y - enemy.y;
+    const len = Math.hypot(dx, dy) || 1;
+    game.enemyBullets.push({
+      x: enemy.x,
+      y: enemy.y + 6,
+      vx: dx / len * ENEMY_BULLET_SPEED,
+      vy: dy / len * ENEMY_BULLET_SPEED
+    });
+  }
+
+  function fireCaptiveBullet(boss) {
+    if (!boss.captive || !game.player.active) return;
+    const dx = game.player.x - boss.captive.x;
+    const dy = PLAYER_Y - boss.captive.y;
+    const len = Math.hypot(dx, dy) || 1;
+    game.enemyBullets.push({
+      x: boss.captive.x,
+      y: boss.captive.y + 4,
+      vx: dx / len * ENEMY_BULLET_SPEED,
+      vy: dy / len * ENEMY_BULLET_SPEED
+    });
+  }
+
+  function capturePlayer(boss) {
+    if (!game.player.active) return;
+
+    boss.captive = {
+      x: boss.x,
+      y: boss.y - 14
+    };
+    boss.captiveFireTimer = 0.4;
+
+    if (game.player.dual) {
+      // Capture one half of the dual fighter.
+      const half = boss.x < game.player.x ? 'left' : 'right';
+      const px = game.player.x + (half === 'left' ? -6 : 6);
+      game.explosions.push({
+        x: px,
+        y: PLAYER_Y,
+        timer: 0.35,
+        duration: 0.35,
+        type: 'player'
+      });
+      sfxPlayerExplosion();
+      if (half === 'left') game.player.x += 6;
+      else game.player.x -= 6;
+      game.player.dual = false;
+    } else {
+      game.explosions.push({
+        x: game.player.x,
+        y: PLAYER_Y,
+        timer: 0.35,
+        duration: 0.35,
+        type: 'player'
+      });
+      sfxPlayerExplosion();
+      game.player.active = false;
+      if (game.reserve > 0) {
+        game.reserve--;
+        game.playerRespawning = true;
+        game.respawnTimer = 1.5;
+        game.readyFlash = 0;
+      } else {
+        gameOver();
+      }
+    }
+  }
+
+  function freeCaptive(boss) {
+    if (!boss.captive) return;
+    const freed = {
+      x: boss.captive.x,
+      y: boss.captive.y,
+      startX: boss.captive.x,
+      startY: boss.captive.y,
+      targetX: game.player.x,
+      targetY: PLAYER_Y,
+      t: 0,
+      duration: 0.8
+    };
+    game.freedShips.push(freed);
+    boss.captive = null;
+  }
+
+  function destroyEnemy(enemy, shot) {
+    if (!enemy.alive) return;
+
+    let points = 0;
+    if (game.state === 'challenging') {
+      points = 100;
+      game.challengeHits++;
+      game.challengeWaveHits[enemy.challengeWave]++;
+    } else {
+      if (enemy.type === 'zako') {
+        points = enemy.state === 'diving' || enemy.state === 'returning' ? 100 : 50;
+      } else if (enemy.type === 'goei') {
+        points = enemy.state === 'diving' || enemy.state === 'returning' ? 160 : 80;
+      } else if (enemy.type === 'boss') {
+        if (enemy.state === 'diving' || enemy.state === 'returning' || enemy.state === 'tractor' || enemy.state === 'tractorStopped') {
+          points = 400 * Math.pow(2, enemy.escorts.length);
+        } else {
+          points = 150;
+        }
+      }
+    }
+
+    enemy.alive = false;
+    game.explosions.push({
+      x: enemy.x,
+      y: enemy.y,
+      timer: 0.3,
+      duration: 0.3,
+      type: 'enemy'
+    });
+
+    if (enemy.type === 'boss') {
+      if (enemy.captive) {
+        if (enemy.state === 'diving' || enemy.state === 'tractor' || enemy.state === 'tractorStopped') {
+          freeCaptive(enemy);
+        } else {
+          // Destroyed in formation: captive is lost.
+          game.explosions.push({
+            x: enemy.captive.x,
+            y: enemy.captive.y,
+            timer: 0.3,
+            duration: 0.3,
+            type: 'enemy'
+          });
+          enemy.captive = null;
+        }
+      }
+      if (enemy.escorts.length > 0) {
+        for (const e of enemy.escorts) e.bossRef = null;
+        enemy.escorts = [];
+      }
+    }
+
+    addScore(points);
+    sfxEnemyDestroyed();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------------
+  function updateStars(dt) {
+    for (const s of game.stars) {
+      s.y += s.speed * dt;
+      if (s.y > H) {
+        s.y -= H;
+        s.x = Math.random() * W;
+      }
+    }
+  }
+
+  function updateExplosions(dt) {
+    for (let i = game.explosions.length - 1; i >= 0; i--) {
+      const e = game.explosions[i];
+      e.timer -= dt;
+      if (e.timer <= 0) game.explosions.splice(i, 1);
+    }
+  }
+
+  function updateFreedShips(dt) {
+    for (let i = game.freedShips.length - 1; i >= 0; i--) {
+      const f = game.freedShips[i];
+      f.t += dt / f.duration;
+      if (f.t >= 1) {
+        if (game.player.active && !game.player.dual) {
+          game.player.dual = true;
+        } else if (!game.player.active) {
+          game.pendingDock = true;
+        }
+        game.freedShips.splice(i, 1);
+      } else {
+        const t = f.t;
+        f.x = f.startX + (f.targetX - f.startX) * t;
+        f.y = f.startY + (f.targetY - f.startY) * t;
+      }
+    }
+  }
+
+  function updatePlayer(dt) {
+    if (game.playerRespawning) {
+      game.respawnTimer -= dt;
+      if (game.respawnTimer <= 0) {
+        resetPlayer();
+      }
+      return;
+    }
+
+    if (!game.player.active) return;
+
+    if (keys.left) game.player.x -= PLAYER_SPEED * dt;
+    if (keys.right) game.player.x += PLAYER_SPEED * dt;
+    game.player.x = clamp(game.player.x, 8, W - 8);
+
+    if (game.readyFlash > 0) game.readyFlash -= dt;
+
+    game.fireCooldown -= dt;
+    if (keys.space && game.fireCooldown <= 0) {
+      firePlayerShot();
+      game.fireCooldown = 0.15;
+    }
+  }
+
+  function updateEnemies(dt) {
+    for (const enemy of game.enemies) {
+      if (!enemy.alive) continue;
+
+      enemy.frame = Math.floor(game.time * 8 + enemy.slotIndex) % 2;
+
+      if (game.state === 'challenging') {
+        if (enemy.state !== 'challenging') continue;
+        const t = (game.stageTime - enemy.challengeStartTime) / enemy.challengeDuration;
+        if (t < 0) continue;
+        if (t >= 1) {
+          enemy.alive = false;
+          continue;
+        }
+        const pos = bezier(
+          enemy.challengePath.start,
+          enemy.challengePath.c1,
+          enemy.challengePath.c2,
+          enemy.challengePath.end,
+          t
+        );
+        enemy.x = pos.x;
+        enemy.y = pos.y;
+        continue;
+      }
+
+      if (enemy.state === 'entering') {
+        const t = (game.stageTime - enemy.entryStartTime) / enemy.entryDuration;
+        if (t < 0) continue;
+        if (t >= 1) {
+          enemy.state = 'formation';
+          const pos = formationOffset(SLOT_DEFS[enemy.slotIndex], game.time);
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+        } else {
+          const pos = bezier(
+            enemy.entryPath.start,
+            enemy.entryPath.c1,
+            enemy.entryPath.c2,
+            enemy.entryPath.end,
+            t
+          );
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+
+          enemy.fireCooldown -= dt;
+          if (enemy.fireCooldown <= 0 && game.player.active) {
+            fireEnemyBullet(enemy);
+            enemy.fireCooldown = 1.5 + Math.random() * 1.5;
+          }
+        }
+      } else if (enemy.state === 'formation') {
+        const pos = formationOffset(SLOT_DEFS[enemy.slotIndex], game.time);
+        enemy.x = pos.x;
+        enemy.y = pos.y;
+        if (enemy.captive) {
+          enemy.captive.x = enemy.x;
+          enemy.captive.y = enemy.y - 14;
+        }
+      } else if (enemy.state === 'diving') {
+        enemy.diveT += dt / enemy.diveDuration;
+        if (enemy.diveT >= 1) {
+          enemy.state = 'returning';
+          const slot = SLOT_DEFS[enemy.slotIndex];
+          const start = { x: 20 + Math.random() * 184, y: -20 };
+          const end = { x: slot.x, y: slot.y };
+          enemy.returnPath = makeReturnPath(start, end);
+          enemy.returnT = 0;
+          enemy.returnDuration = 1.5;
+        } else {
+          const pos = bezier(
+            enemy.divePath.start,
+            enemy.divePath.c1,
+            enemy.divePath.c2,
+            enemy.divePath.end,
+            enemy.diveT
+          );
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+
+          enemy.fireCooldown -= dt;
+          if (enemy.fireCooldown <= 0 && game.player.active) {
+            fireEnemyBullet(enemy);
+            enemy.fireCooldown = 0.7 + Math.random() * 0.8;
+          }
+        }
+
+        if (enemy.captive) {
+          enemy.captive.x = enemy.x;
+          enemy.captive.y = enemy.y - 14;
+          enemy.captiveFireTimer -= dt;
+          if (enemy.captiveFireTimer <= 0 && game.player.active) {
+            fireCaptiveBullet(enemy);
+            enemy.captiveFireTimer = 0.7 + Math.random() * 0.6;
+          }
+        }
+      } else if (enemy.state === 'returning') {
+        enemy.returnT += dt / enemy.returnDuration;
+        if (enemy.returnT >= 1) {
+          enemy.state = 'formation';
+          const pos = formationOffset(SLOT_DEFS[enemy.slotIndex], game.time);
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+          if (enemy.bossRef) {
+            const idx = enemy.bossRef.escorts.indexOf(enemy);
+            if (idx >= 0) enemy.bossRef.escorts.splice(idx, 1);
+            enemy.bossRef = null;
+          }
+        } else {
+          const pos = bezier(
+            enemy.returnPath.start,
+            enemy.returnPath.c1,
+            enemy.returnPath.c2,
+            enemy.returnPath.end,
+            enemy.returnT
+          );
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+        }
+        if (enemy.captive) {
+          enemy.captive.x = enemy.x;
+          enemy.captive.y = enemy.y - 14;
+        }
+      } else if (enemy.state === 'tractor') {
+        enemy.diveT += dt / enemy.diveDuration;
+        if (enemy.diveT >= 1) {
+          enemy.state = 'tractorStopped';
+          enemy.beamActive = true;
+          enemy.beamTimer = 1.5;
+          enemy.x = enemy.divePath.end.x;
+          enemy.y = enemy.divePath.end.y;
+          sfxTractorBeam();
+        } else {
+          const pos = bezier(
+            enemy.divePath.start,
+            enemy.divePath.c1,
+            enemy.divePath.c2,
+            enemy.divePath.end,
+            enemy.diveT
+          );
+          enemy.x = pos.x;
+          enemy.y = pos.y;
+        }
+        if (enemy.captive) {
+          enemy.captive.x = enemy.x;
+          enemy.captive.y = enemy.y - 14;
+        }
+      } else if (enemy.state === 'tractorStopped') {
+        enemy.beamTimer -= dt;
+
+        if (enemy.beamActive && game.player.active) {
+          const halfWidth = 6 + (PLAYER_Y - enemy.y) * 0.12;
+          if (Math.abs(game.player.x - enemy.x) < halfWidth) {
+            capturePlayer(enemy);
+            enemy.beamActive = false;
+          }
+        }
+
+        if (enemy.captive) {
+          enemy.captive.x = enemy.x;
+          enemy.captive.y = enemy.y - 14;
+          enemy.captiveFireTimer -= dt;
+          if (enemy.captiveFireTimer <= 0 && game.player.active) {
+            fireCaptiveBullet(enemy);
+            enemy.captiveFireTimer = 0.7 + Math.random() * 0.6;
+          }
+        }
+
+        if (enemy.beamTimer <= 0) {
+          enemy.state = 'returning';
+          enemy.beamActive = false;
+          const slot = SLOT_DEFS[enemy.slotIndex];
+          const start = { x: enemy.x, y: enemy.y };
+          const end = { x: slot.x, y: slot.y };
+          enemy.returnPath = makeReturnPath(start, end);
+          enemy.returnT = 0;
+          enemy.returnDuration = 1.5;
+        }
+      }
+    }
+  }
+
+  function updatePlayerShots(dt) {
+    for (let i = game.playerShots.length - 1; i >= 0; i--) {
+      const shot = game.playerShots[i];
+      shot.y += shot.vy * dt;
+      if (shot.y < -10) {
+        game.playerShots.splice(i, 1);
+        continue;
+      }
+
+      for (const enemy of game.enemies) {
+        if (!enemy.alive) continue;
+        const hs = enemyHalfSize(enemy.type);
+        if (aabb(
+          { x: shot.x, y: shot.y, w: 1, h: 2.5 },
+          { x: enemy.x, y: enemy.y, w: hs.w, h: hs.h }
+        )) {
+          game.hits++;
+          if (enemy.type === 'boss' && enemy.hp > 1) {
+            enemy.hp--;
+            enemy.hitColor = true;
+            sfxBossHit();
+            game.explosions.push({
+              x: enemy.x,
+              y: enemy.y,
+              timer: 0.12,
+              duration: 0.12,
+              type: 'enemy'
+            });
+          } else {
+            destroyEnemy(enemy, shot);
+          }
+          game.playerShots.splice(i, 1);
+          break;
+        }
+      }
+    }
+  }
+
+  function updateEnemyBullets(dt) {
+    for (let i = game.enemyBullets.length - 1; i >= 0; i--) {
+      const b = game.enemyBullets[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+
+      if (b.y > H + 10 || b.x < -10 || b.x > W + 10) {
+        game.enemyBullets.splice(i, 1);
+        continue;
+      }
+
+      if (game.player.active) {
+        const ph = playerHalfSize();
+        if (game.player.dual) {
+          const left = { x: game.player.x - 6, y: PLAYER_Y, w: ph.w, h: ph.h };
+          const right = { x: game.player.x + 6, y: PLAYER_Y, w: ph.w, h: ph.h };
+          if (aabb({ x: b.x, y: b.y, w: 1, h: 1.5 }, left)) {
+            losePlayerShip(left.x, left.y, 'left');
+            game.enemyBullets.splice(i, 1);
+            continue;
+          }
+          if (aabb({ x: b.x, y: b.y, w: 1, h: 1.5 }, right)) {
+            losePlayerShip(right.x, right.y, 'right');
+            game.enemyBullets.splice(i, 1);
+            continue;
+          }
+        } else {
+          const p = { x: game.player.x, y: PLAYER_Y, w: ph.w, h: ph.h };
+          if (aabb({ x: b.x, y: b.y, w: 1, h: 1.5 }, p)) {
+            losePlayerShip(game.player.x, PLAYER_Y);
+            game.enemyBullets.splice(i, 1);
+            continue;
+          }
+        }
+      }
+    }
+  }
+
+  function updateCollisions() {
+    if (!game.player.active || game.state === 'challenging') return;
+
+    for (const enemy of game.enemies) {
+      if (!enemy.alive) continue;
+      const hs = enemyHalfSize(enemy.type);
+      const e = { x: enemy.x, y: enemy.y, w: hs.w, h: hs.h };
+
+      if (game.player.dual) {
+        const ph = playerHalfSize();
+        const left = { x: game.player.x - 6, y: PLAYER_Y, w: ph.w, h: ph.h };
+        const right = { x: game.player.x + 6, y: PLAYER_Y, w: ph.w, h: ph.h };
+        if (aabb(e, left)) {
+          destroyEnemy(enemy, null);
+          losePlayerShip(left.x, left.y, 'left');
+          return;
+        }
+        if (aabb(e, right)) {
+          destroyEnemy(enemy, null);
+          losePlayerShip(right.x, right.y, 'right');
+          return;
+        }
+      } else {
+        const ph = playerHalfSize();
+        const p = { x: game.player.x, y: PLAYER_Y, w: ph.w, h: ph.h };
+        if (aabb(e, p)) {
+          destroyEnemy(enemy, null);
+          losePlayerShip(game.player.x, PLAYER_Y);
+          return;
+        }
+      }
+    }
+  }
+
+  function update(dt) {
+    game.time += dt;
+    updateStars(dt);
+    updateExplosions(dt);
+    updateFreedShips(dt);
+
+    if (game.paused) return;
+
+    if (game.state === 'title') {
+      return;
+    }
+
+    if (game.state === 'stageIntro') {
+      game.stageIntroTimer -= dt;
+      if (game.stageIntroTimer <= 0) {
+        startStage(game.stage);
+      }
+      return;
+    }
+
+    if (game.state === 'challengeResults') {
+      game.challengeResultsTimer -= dt;
+      if (game.challengeResultsTimer <= 0) {
+        game.stage++;
+        game.state = 'stageIntro';
+        game.stageIntroTimer = 2.0;
+        sfxStageStart();
+      }
+      return;
+    }
+
+    if (game.state === 'gameOver') {
+      game.gameOverTimer -= dt;
+      if (game.gameOverTimer <= 0) {
+        game.state = 'title';
+        game.player.active = false;
+        game.player.dual = false;
+        game.enemies = [];
+        game.playerShots = [];
+        game.enemyBullets = [];
+        game.explosions = [];
+        game.freedShips = [];
+      }
+      return;
+    }
+
+    if (game.state !== 'playing' && game.state !== 'challenging') return;
+
+    game.stageTime += dt;
+
+    updatePlayer(dt);
+    updateEnemies(dt);
+    updatePlayerShots(dt);
+    updateEnemyBullets(dt);
+    updateCollisions();
+
+    // Remove dead enemies
+    game.enemies = game.enemies.filter(e => e.alive);
+
+    if (game.state === 'playing') {
+      if (!game.formationComplete) {
+        const stillEntering = game.enemies.some(e => e.alive && e.state === 'entering');
+        if (!stillEntering && game.enemies.length > 0) {
+          game.formationComplete = true;
+          game.diveTimer = 1.5;
+        }
+      }
+
+      if (game.formationComplete && !game.playerRespawning) {
+        game.diveTimer -= dt;
+        if (game.diveTimer <= 0) {
+          scheduleDive();
+          const interval = Math.max(0.8, 3.0 - game.stage * 0.15) + Math.random() * 0.5;
+          game.diveTimer = interval;
+        }
+      }
+
+      if (game.enemies.length === 0) {
+        game.stage++;
+        game.state = 'stageIntro';
+        game.stageIntroTimer = 2.0;
+        sfxStageStart();
+      }
+    }
+
+    if (game.state === 'challenging') {
+      if (game.enemies.length === 0) {
+        // Calculate bonuses
+        let bonus = 0;
+        for (let w = 0; w < 5; w++) {
+          if (game.challengeWaveHits[w] === 8) bonus += 1000;
+        }
+        if (game.challengeHits === 40) bonus += 10000;
+        game.challengeBonus = bonus;
+        addScore(bonus);
+        game.state = 'challengeResults';
+        game.challengeResultsTimer = 3.0;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Rendering
+  // ---------------------------------------------------------------------------
+  function drawStars() {
+    for (const s of game.stars) {
+      const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(game.time * 3 + s.phase));
+      ctx.globalAlpha = tw;
+      ctx.fillStyle = s.color;
+      ctx.fillRect(Math.round(s.x), Math.round(s.y), s.size, s.size);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawMiniShip(x, y) {
+    ctx.fillStyle = '#e8f4ff';
+    ctx.fillRect(x, y, 1, 2);
+    ctx.fillRect(x + 1, y - 1, 1, 4);
+    ctx.fillRect(x + 2, y - 2, 2, 5);
+    ctx.fillRect(x + 4, y - 1, 1, 4);
+    ctx.fillRect(x + 5, y, 1, 2);
+    ctx.fillStyle = '#ff4a4a';
+    ctx.fillRect(x + 1, y + 2, 1, 1);
+    ctx.fillRect(x + 4, y + 2, 1, 1);
+  }
+
+  function drawBadge(x, y, value) {
+    // pole
+    ctx.fillStyle = '#c8c8c8';
+    ctx.fillRect(x, y, 1, 10);
+    // flag
+    ctx.fillStyle = '#2a6dff';
+    ctx.fillRect(x + 1, y, 11, 7);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 1.5, y + 0.5, 10, 6);
+    drawText(String(value), x + 6, y + 1, '#ffffff', 1, 0, 'center');
+  }
+
+  function drawHUD() {
+    // Top
+    drawText('1UP', 16, 4, '#ffffff', 1, 1, 'left');
+    drawText(String(game.score).padStart(6, '0'), 16, 12, '#ffffff', 1, 1, 'left');
+
+    drawText('HIGH SCORE', 120, 4, '#ffffff', 1, 1, 'center');
+    drawText(String(game.highScore).padStart(6, '0'), 120, 12, '#ffffff', 1, 1, 'center');
+
+    // Reserve ships bottom left
+    const maxIcons = 8;
+    const shown = Math.min(game.reserve, maxIcons);
+    for (let i = 0; i < shown; i++) {
+      drawMiniShip(8 + i * 9, 272);
+    }
+    if (game.reserve > maxIcons) {
+      drawText('+' + (game.reserve - maxIcons), 8 + maxIcons * 9, 272, '#ffffff', 1, 1, 'left');
+    }
+
+    // Stage badges bottom right
+    let remaining = game.stage;
+    const denoms = [50, 30, 20, 10, 5, 1];
+    const badges = [];
+    for (const d of denoms) {
+      while (remaining >= d) {
+        badges.push(d);
+        remaining -= d;
+      }
+    }
+    // draw from right to left
+    let bx = W - 14;
+    for (let i = badges.length - 1; i >= 0; i--) {
+      drawBadge(bx, 268, badges[i]);
+      bx -= 13;
+    }
+
+    if (game.muted) {
+      drawText('MUTED', 8, 260, '#888888', 1, 1, 'left');
+    }
+  }
+
+  function drawEnemy(enemy) {
+    let sprite;
+    if (enemy.type === 'zako') {
+      sprite = enemy.frame === 0 ? zakoSprite0 : zakoSprite1;
+    } else if (enemy.type === 'goei') {
+      sprite = enemy.frame === 0 ? goeiSprite0 : goeiSprite1;
+    } else {
+      if (enemy.hitColor) {
+        sprite = enemy.frame === 0 ? bossHitSprite0 : bossHitSprite1;
+      } else {
+        sprite = enemy.frame === 0 ? bossSprite0 : bossSprite1;
+      }
+    }
+    ctx.drawImage(sprite, Math.round(enemy.x - sprite.width / 2), Math.round(enemy.y - sprite.height / 2));
+
+    if (enemy.captive) {
+      ctx.drawImage(
+        capturedSprite,
+        Math.round(enemy.captive.x - capturedSprite.width / 2),
+        Math.round(enemy.captive.y - capturedSprite.height / 2)
+      );
+    }
+  }
+
+  function drawTractorBeam(boss) {
+    if (!boss.beamActive) return;
+    const x = boss.x;
+    const y = boss.y + 8;
+    const halfTop = 3;
+    const halfBottom = 18;
+
+    ctx.globalAlpha = 0.22;
+    ctx.fillStyle = '#4aa3ff';
+    ctx.beginPath();
+    ctx.moveTo(x - halfTop, y);
+    ctx.lineTo(x + halfTop, y);
+    ctx.lineTo(x + halfBottom, H);
+    ctx.lineTo(x - halfBottom, H);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.globalAlpha = 0.55;
+    ctx.strokeStyle = '#9fe8ff';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x - halfTop, y);
+    ctx.lineTo(x - halfBottom, H);
+    ctx.moveTo(x + halfTop, y);
+    ctx.lineTo(x + halfBottom, H);
+    ctx.stroke();
+
+    // animated stripes
+    for (let i = 0; i < 6; i++) {
+      const t = (i + (game.time * 1.5 % 1)) / 6;
+      const yy = y + (H - y) * t;
+      const hw = halfTop + (halfBottom - halfTop) * t;
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#b8f0ff';
+      ctx.fillRect(x - hw, yy, hw * 2, 1);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPlayer() {
+    if (game.playerRespawning) {
+      drawText('READY', 112, 240, '#ffffff', 1, 1, 'center');
+      return;
+    }
+    if (!game.player.active) return;
+
+    if (game.player.dual) {
+      ctx.drawImage(playerSprite, Math.round(game.player.x - 6 - playerSprite.width / 2), PLAYER_Y - playerSprite.height / 2);
+      ctx.drawImage(playerSprite, Math.round(game.player.x + 6 - playerSprite.width / 2), PLAYER_Y - playerSprite.height / 2);
+    } else {
+      ctx.drawImage(playerSprite, Math.round(game.player.x - playerSprite.width / 2), PLAYER_Y - playerSprite.height / 2);
+    }
+
+    if (game.readyFlash > 0) {
+      drawText('READY', 112, 240, '#ffffff', 1, 1, 'center');
+    }
+  }
+
+  function drawShots() {
+    ctx.fillStyle = '#ffffff';
+    for (const s of game.playerShots) {
+      ctx.fillRect(Math.round(s.x), Math.round(s.y), 1, 5);
+    }
+    ctx.fillStyle = '#ff5a3c';
+    for (const b of game.enemyBullets) {
+      ctx.fillRect(Math.round(b.x) - 1, Math.round(b.y) - 1, 2, 3);
+    }
+  }
+
+  function drawExplosions() {
+    for (const e of game.explosions) {
+      const frame = Math.min(3, Math.floor((1 - e.timer / e.duration) * 4));
+      const sprite = e.type === 'player' ? playerExplosionFrames[frame] : enemyExplosionFrames[frame];
+      ctx.drawImage(sprite, Math.round(e.x - sprite.width / 2), Math.round(e.y - sprite.height / 2));
+    }
+  }
+
+  function drawFreedShips() {
+    for (const f of game.freedShips) {
+      ctx.drawImage(capturedSprite, Math.round(f.x - capturedSprite.width / 2), Math.round(f.y - capturedSprite.height / 2));
+    }
+  }
+
+  function drawTitle() {
+    drawText('HIGH SCORE', 112, 8, '#ffffff', 1, 1, 'center');
+    drawText(String(game.highScore).padStart(6, '0'), 112, 16, '#ffffff', 1, 1, 'center');
+
+    drawText('GALAGA', 112, 52, '#ffffff', 3, 2, 'center');
+
+    // Score table
+    ctx.drawImage(zakoSprite0, 48, 100);
+    drawText('ZAKO', 66, 98, '#4aa3ff', 1, 1, 'left');
+    drawText('50 / 100', 66, 106, '#ffffff', 1, 1, 'left');
+
+    ctx.drawImage(goeiSprite0, 48, 120);
+    drawText('GOEI', 66, 118, '#ff4a4a', 1, 1, 'left');
+    drawText('80 / 160', 66, 126, '#ffffff', 1, 1, 'left');
+
+    ctx.drawImage(bossSprite0, 48, 140);
+    drawText('BOSS', 66, 138, '#35d04a', 1, 1, 'left');
+    drawText('150 / 400 / 800 / 1600', 66, 146, '#ffffff', 1, 1, 'left');
+
+    if (Math.floor(game.time * 2) % 2 === 0) {
+      drawText('PRESS ENTER TO START', 112, 200, '#ffe34a', 1, 1, 'center');
+    }
+    drawText('M TO MUTE', 112, 220, '#888888', 1, 1, 'center');
+  }
+
+  function drawStageIntro() {
+    drawText('STAGE ' + game.stage, 112, 132, '#ffffff', 2, 2, 'center');
+    if (game.stage % 4 === 3) {
+      drawText('CHALLENGING STAGE', 112, 165, '#ffe34a', 1, 1, 'center');
+    }
+  }
+
+  function drawChallengeResults() {
+    drawText('CHALLENGING STAGE', 112, 100, '#ffe34a', 1, 1, 'center');
+    drawText('NUMBER OF HITS', 112, 125, '#ffffff', 1, 1, 'center');
+    drawText(String(game.challengeHits), 112, 140, '#ffffff', 2, 2, 'center');
+    drawText('BONUS', 112, 165, '#ffffff', 1, 1, 'center');
+    drawText(String(game.challengeBonus), 112, 180, '#ffe34a', 2, 2, 'center');
+    if (game.challengeHits === 40) {
+      drawText('PERFECT!', 112, 205, '#ffe34a', 2, 2, 'center');
+    }
+  }
+
+  function drawGameOver() {
+    drawText('GAME OVER', 112, 90, '#ffffff', 2, 2, 'center');
+
+    drawText('SHOTS FIRED', 112, 130, '#ffffff', 1, 1, 'center');
+    drawText(String(game.shotsFired), 112, 145, '#ffffff', 2, 2, 'center');
+
+    drawText('HITS', 112, 170, '#ffffff', 1, 1, 'center');
+    drawText(String(game.hits), 112, 185, '#ffffff', 2, 2, 'center');
+
+    const ratio = game.shotsFired > 0 ? (game.hits / game.shotsFired) * 100 : 0;
+    drawText('HIT-MISS RATIO', 112, 210, '#ffffff', 1, 1, 'center');
+    drawText(ratio.toFixed(1) + '%', 112, 225, '#ffe34a', 2, 2, 'center');
+
+    drawText('HIGH SCORE', 112, 250, '#ffffff', 1, 1, 'center');
+    drawText(String(game.highScore).padStart(6, '0'), 112, 260, '#ffffff', 1, 1, 'center');
+  }
+
+  function render() {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, W, H);
+
+    drawStars();
+
+    if (game.state === 'title') {
+      drawTitle();
+    } else if (game.state === 'stageIntro') {
+      drawStageIntro();
+    } else if (game.state === 'playing' || game.state === 'challenging') {
+      // Tractor beams first (behind enemies)
+      for (const enemy of game.enemies) {
+        if (enemy.alive && enemy.type === 'boss' && enemy.beamActive) {
+          drawTractorBeam(enemy);
+        }
+      }
+
+      // Enemies
+      for (const enemy of game.enemies) {
+        if (enemy.alive) drawEnemy(enemy);
+      }
+
+      drawFreedShips();
+      drawShots();
+      drawPlayer();
+      drawExplosions();
+      drawHUD();
+
+      if (game.state === 'challenging') {
+        drawText('CHALLENGING STAGE', 112, 30, '#ffe34a', 1, 1, 'center');
+      }
+    } else if (game.state === 'challengeResults') {
+      drawChallengeResults();
+      drawHUD();
+    } else if (game.state === 'gameOver') {
+      drawGameOver();
+    }
+
+    if (game.paused) {
+      drawText('PAUSED', 112, 140, '#ffffff', 2, 2, 'center');
+      drawText('PRESS P TO RESUME', 112, 165, '#888888', 1, 1, 'center');
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------------
+  const keys = {
+    left: false,
+    right: false,
+    space: false
+  };
+
+  window.addEventListener('keydown', (e) => {
+    initAudio();
+
+    const k = e.key.toLowerCase();
+
+    if (k === 'arrowleft' || k === 'a') {
+      keys.left = true;
+      e.preventDefault();
+    } else if (k === 'arrowright' || k === 'd') {
+      keys.right = true;
+      e.preventDefault();
+    } else if (k === ' ' || k === 'spacebar') {
+      keys.space = true;
+      e.preventDefault();
+    } else if (k === 'enter') {
+      e.preventDefault();
+      if (game.state === 'title') {
+        startGame();
+      }
+    } else if (k === 'p') {
+      e.preventDefault();
+      if (game.state === 'playing' || game.state === 'challenging') {
+        game.paused = !game.paused;
+      }
+    } else if (k === 'm') {
+      e.preventDefault();
+      game.muted = !game.muted;
+      if (masterGain) {
+        masterGain.gain.value = game.muted ? 0 : 0.25;
+      }
+    }
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const k = e.key.toLowerCase();
+    if (k === 'arrowleft' || k === 'a') keys.left = false;
+    if (k === 'arrowright' || k === 'd') keys.right = false;
+    if (k === ' ' || k === 'spacebar') keys.space = false;
+  });
+
+  // ---------------------------------------------------------------------------
+  // Resize / crisp scaling
+  // ---------------------------------------------------------------------------
+  function resize() {
+    const scale = Math.max(1, Math.floor(Math.min(window.innerWidth / W, window.innerHeight / H)));
+    canvas.style.width = (W * scale) + 'px';
+    canvas.style.height = (H * scale) + 'px';
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------------------------------------------------------------------------
+  // Main loop
+  // ---------------------------------------------------------------------------
+  let lastTime = performance.now();
+  let accumulator = 0;
+
+  function loop(now) {
+    const dt = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
+    accumulator += dt;
+
+    let steps = 0;
+    while (accumulator >= STEP && steps < 5) {
+      update(STEP);
+      accumulator -= STEP;
+      steps++;
+    }
+
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

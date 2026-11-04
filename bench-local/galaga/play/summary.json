@@ -1022,5 +1022,148 @@
   "passed": 8,
   "errors": [],
   "n_errors": 0
+ },
+ "5090-deepseek41-2.25bpw-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-deepseek41-2.25bpw-medium-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 11.2,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-deepseek41-2.25bpw-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-deepseek41-2.25bpw-medium32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-deepseek41-2.25bpw-off-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": false,
+  "alive_at_end": false,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 54.6,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-deepseek41-2.25bpw-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": false,
+  "alive_at_end": true,
+  "passed": 7,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 16.9,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 19.2,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 84.8,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 87.3,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   }
+  ],
+  "n_errors": 4
+ },
+ "5090-deepseek41-2.25bpw-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-deepseek41-2.25bpw-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 8.5,
+    "text": "Cannot read properties of undefined (reading 'y')"
+   }
+  ],
+  "n_errors": 1
  }
 }

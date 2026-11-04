@@ -22,7 +22,7 @@ REV.mkdir(exist_ok=True)
 def letters():
     i = 0
     while True:
-        yield chr(ord("A") + i) if i < 26 else "A" + chr(ord("A") + i - 26)
+        yield chr(ord("A") + i) if i < 26 else chr(ord("A") + i // 26 - 1) + chr(ord("A") + i % 26)
         i += 1
 
 

@@ -1,0 +1,34 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": true,
+ "survives_play": false,
+ "alive_at_end": true,
+ "passed": 7,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 16.9,
+   "text": "Cannot read properties of undefined (reading 'y')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 19.2,
+   "text": "Cannot read properties of undefined (reading 'y')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 84.8,
+   "text": "Cannot read properties of undefined (reading 'y')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 87.3,
+   "text": "Cannot read properties of undefined (reading 'y')"
+  }
+ ],
+ "n_errors": 4
+}

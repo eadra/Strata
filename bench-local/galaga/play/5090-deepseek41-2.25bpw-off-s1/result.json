@@ -1,0 +1,19 @@
+{
+ "loads_clean": true,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": true,
+ "survives_play": false,
+ "alive_at_end": false,
+ "passed": 6,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 54.6,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  }
+ ],
+ "n_errors": 1
+}

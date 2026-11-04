@@ -389,6 +389,62 @@ gap than 10 points: one game is close to the arcade, the other two are not, whic
 show. For the first time a Strata game is put level with the Sonnet 5.5 game on faithfulness, by a 4-bit quant with a
 16K thinking budget.
 
+## DeepSeek V4.1-Flash on the 5090 with 128 GB (2026-11-04, Strata 0.2.10, DeepSeek engine 0.1.56)
+
+The same 8 runs on a different model: DeepSeek V4.1-Flash-1017 in ISTA-DASLab's IST-DAS 2.25 bpw pack (IQ2_XS shards,
+144.6 GB, plus the 111 GB Engram table), on its own engine (`strata-dsv41.exe`). The machine is the same 5090 /
+9950X3D box with **128 GB DDR5** now (64 GB in the three rounds above), the model files on a Crucial T710 NVMe. Server:
+`strata launch --family deepseek41 --model ist-das-2.25bpw --context 128k --speed faster --set cpu-threads=16`
+(131K context, FP4 KV, vision on, `--speed faster` = 5 of 6 routed experts per token, DSpark drafter off), sent to the
+running server with `gen.py --use-running`. **2,398 of 15,360 experts on the card (23.7 GB)**, a 104 GB RAM store
+of the hottest experts, the rest read from the SSD. Same prompt, the same Qwen sampling as every arm above (DeepSeek's own
+recommendation is temperature 1.0, top_p 1.0; not used, to keep the test identical), same caps, seeds and thinking
+budgets; DeepSeek's server takes `reasoning_effort` medium / xhigh and `reasoning_budget_tokens` the same way. Same
+play-test and blind review (letters AX-BE, Claude Fable 5.1 reviewers like the other 5090 rounds).
+
+| run | score /76 | play checks /8 | severe bugs | verdict | out tokens | time | tok/s | html lines |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| off s1 | 55 | 6 | 2 | not playable (the first Zako or Goei kill freezes the game: a 4-frame index into the 3-frame small explosion) | 14,541 | 6.2 min | 39 | 1,632 |
+| off s2 | 41 | 7 | 2 | barely playable (stage 3 stack-overflows: `startChallengingStage` calls itself; a rescue can never clear the stage) | 13,368 | 5.3 min | 42 | 1,505 |
+| medium 16K s1 | **70** | 8 | **0** | **playable with flaws** (11 minor bugs: escorts never return, challenge-stage hits never counted) | 32,735 | 13.3 min | 41 | 1,782 |
+| medium 16K s2 | 68 | 6 | 2 | barely playable (the first death by an enemy bullet freezes the game; after one capture no enemy dives again) | 32,394 | 13.0 min | 42 | 1,661 |
+| medium 32K s1 | 35 | 8 | 1 | not playable (the fighter is never activated at game start: the formation flies in and waits forever) | 50,448 | 20.6 min | 41 | 1,863 |
+| medium 32K s2 | **67** | 8 | 1 | **playable with flaws** (escorts stranded off-screen after a Boss dive; dives stop after two) | 47,680 | 19.2 min | 41 | 1,624 |
+| xhigh 32K s1 | 62 | 8 | 2 | barely playable (no respawn after the first death or capture: soft-lock after one life) | 50,031 | 19.7 min | 42 | 2,004 |
+| xhigh 32K s2 | 53 | 6 | 3 | barely playable (the first bullet death freezes the game; the tractor dive reads a field that does not exist) | 50,411 | 20.1 min | 42 | 2,042 |
+
+| same machine, same reviewers | IQ3_XXS | IQ3_S | UD-Q4_K_XL | DeepSeek V4.1 2.25 bpw |
+| --- | --- | --- | --- | --- |
+| RAM | 64 GB | 64 GB | 64 GB | 128 GB |
+| mean score /76 | 48.4 | 30.9 | 33.6 | **56.4** |
+| best run | 70 | 70 | 70 | 70 |
+| plays well / playable with flaws | 0 of 8 | 2 of 8 | 3 of 8 | 2 of 8 |
+| barely playable | 4 of 8 | 1 of 8 | 1 of 8 | 4 of 8 |
+| crashed at load or on start | 3 of 8 | 5 of 8 | 3 of 8 | **0 of 8** |
+| passed all 8 play checks | 4 of 8 | 4 of 8 | 5 of 8 | 4 of 8 |
+| decode, whole request | 238-257 tok/s | 222-260 tok/s | 30-56 tok/s | 39-42 tok/s |
+| time for the 8 runs | 18 min | 19 min | 107 min | 117 min |
+| games with no severe bug | 0 | 1 | 1 | 1 |
+
+- **Every DeepSeek game runs.** All 8 finished on their own (`stop`, none at the cap, no loops), all 8 load, draw a
+  title and start a game. No other 5090 round got all 8 past the load: the Qwen quants crashed at load or on
+  start in 3 to 5 of 8. That is why the mean is 8-26 points higher. DeepSeek's games fail later, in play: 4 of 8 freeze
+  on a runtime exception (three of them the same mistake, replacing the enemy-bullet array while a loop walks it), and
+  the others soft-lock (no respawn, a fighter never activated, stranded escorts).
+- **The best game is no better.** 70 again, the fourth 70 on this machine, from medium 16K s1 with no severe bug, like
+  UD-Q4's medium 16K s1. "Playable with flaws" is 2 of 8, inside the Qwen quants' 0-3.
+- **Thinking off is closer to the thinking arms here** (55 and 41 against the Qwen quants' 3-35), but neither `off` game
+  is playable. The two playable games are medium 16K and medium 32K; xhigh 32K gave 62 and 53, both barely playable.
+- **Speed: 6x slower than the IQ3 quants, about the same as UD-Q4 at its 40 GiB budget.** 39-42 tok/s over every
+  whole request, flat from 15K to 50K tokens, 2 h for the 8 runs. The server had just been restarted: the first run
+  started at 25 tok/s and was at 40 by its end.
+- **The play-test passed a broken game again** (medium 32K s1: 8/8 checks, but the fighter is never active; the
+  enemies flying in move the bottom of the screen, so `moves` passes). Confirmed in the code: `startGame` sets
+  `player.active = false` (line 782), `startStage` never sets it back, and `resetPlayer` is only reached from the
+  respawn path (line 1073).
+- **Not a quant comparison.** A different model (against Qwen3.8-Flash-Next), a different engine and twice the RAM. Not hand-played yet: the games to play are `out/5090-deepseek41-2.25bpw-medium-s1.html`
+  (70) and `out/5090-deepseek41-2.25bpw-medium32k-s2.html` (67).
+
 ## What this does and does not show
 
 - **One-shot, this task is mostly failed by every quant: 2 playable games out of 12.** 7 of 12 never reach gameplay:
@@ -428,6 +484,8 @@ show. For the first time a Strata game is put level with the Sonnet 5.5 game on 
 ../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants IQ3_XXS --arms off,medium,medium32k,xhigh32k  # against a running server
 ../../.venv/Scripts/python.exe gen.py --prefix 5090- --quants IQ3_S --arms off,medium,medium32k,xhigh32k                # starts its own server
 ../../.venv/Scripts/python.exe gen.py --prefix 5090- --quants unsloth-ud-q4_k_xl --arms off,medium,medium32k,xhigh32k   # ~110 min on 64 GB (SSD-mapped)
+../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants deepseek41-2.25bpw --arms off,medium,medium32k,xhigh32k  # a running DeepSeek server, ~2 h
+pw/Scripts/python.exe playtest.py "5090-deepseek41*.html"   # a glob must end in .html: it would also load the .json records
 python -m venv pw && pw/Scripts/pip install playwright pillow
 pw/Scripts/python.exe playtest.py && pw/Scripts/python.exe sheet.py
 python stats.py && python blind.py                          # then review each review/<letter>/ against rubric.md
