@@ -1165,5 +1165,317 @@
    }
   ],
   "n_errors": 1
+ },
+ "5090-unsloth-ud-q6_k_xl-medium-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q6_k_xl-medium-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "FPS is not defined"
+   }
+  ],
+  "n_errors": 1
+ },
+ "5090-unsloth-ud-q6_k_xl-medium32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q6_k_xl-medium32k-s2": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": false,
+  "alive_at_end": true,
+  "passed": 6,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'length')"
+   }
+  ],
+  "n_errors": 3473
+ },
+ "5090-unsloth-ud-q6_k_xl-off-s1": {
+  "loads_clean": false,
+  "canvas": true,
+  "title_drawn": false,
+  "animates_idle": false,
+  "starts": false,
+  "moves": false,
+  "survives_play": true,
+  "alive_at_end": false,
+  "passed": 2,
+  "errors": [
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.0,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   },
+   {
+    "kind": "pageerror",
+    "t": 0.1,
+    "text": "Cannot read properties of undefined (reading 'rows')"
+   }
+  ],
+  "n_errors": 601
+ },
+ "5090-unsloth-ud-q6_k_xl-off-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q6_k_xl-xhigh32k-s1": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
+ },
+ "5090-unsloth-ud-q6_k_xl-xhigh32k-s2": {
+  "loads_clean": true,
+  "canvas": true,
+  "title_drawn": true,
+  "animates_idle": true,
+  "starts": true,
+  "moves": true,
+  "survives_play": true,
+  "alive_at_end": true,
+  "passed": 8,
+  "errors": [],
+  "n_errors": 0
  }
 }

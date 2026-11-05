@@ -445,6 +445,60 @@ play-test and blind review (letters AX-BE, Claude Fable 5.1 reviewers like the o
 - **Not a quant comparison.** A different model (against Qwen3.8-Flash-Next), a different engine and twice the RAM. Not hand-played yet: the games to play are `out/5090-deepseek41-2.25bpw-medium-s1.html`
   (70) and `out/5090-deepseek41-2.25bpw-medium32k-s2.html` (67).
 
+## Unsloth UD-Q6_K_XL on the 5090 with 128 GB (2026-11-05, Strata 0.2.11, engine 0.1.57)
+
+The same 8 runs on Qwen3.8-Flash-Next again, in Unsloth's 6-bit file (UD-Q6_K_XL at revision `38bb39e`, 169.2 GB;
+not touched by Unsloth's 2026-11-04 "Dynamic v3.1" re-release, which changed the 4-bit and smaller sets only). Same
+5090 / 9950X3D box with 128 GB. With 128 GB **every routed expert is held in RAM** (101.75 GiB; 43 GB locked, about
+59 GiB pinned in slices), **5,223 experts also on the card (21.6 GiB)**, the 54.4 GB Q8_0 PLE table read from the file
+on the T710. Server: `strata launch --family unsloth --model UD-Q6_K_XL --context 128k` (131K context, int8 KV, vision
+on, DFlash2 drafter, one request at a time), then a quick tune that kept `--prefill auto:32768` (its own decode
+measurement, with MTP: 81.4 -> 89.5 tok/s, flagged noisy). Same prompt, sampling, caps, seeds and thinking budgets; same
+play-test and blind review (letters BF-BM, Claude Fable 5.1 reviewers).
+
+| run | score /76 | play checks /8 | severe bugs | verdict | out tokens | time | tok/s | html lines |
+| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: |
+| off s1 | 34 | 2 | 12 | not playable (the title screen asks for sprites that do not exist; the throw skips `ctx.restore()`, so the screen stays black) | 11,470 | 2.0 min | 94 | 500 |
+| off s2 | 21 | 8 | 5 | not playable (the player respawns every tick: GAME OVER in four ticks, no enemy ever appears) | 14,113 | 2.4 min | 99 | 840 |
+| medium 16K s1 | 45 | 8 | 2 | not playable (the player object has no `y`: the fighter is never drawn, its shots vanish, it cannot be hit) | 29,940 | 6.3 min | 80 | 998 |
+| medium 16K s2 | 8 | 2 | 1 | not playable (`FPS is not defined` in the main loop: nothing is ever drawn) | 29,918 | 6.1 min | 82 | 944 |
+| medium 32K s1 | 53 | 8 | 3 | not playable (the fire cooldown is never set, so the player can never shoot) | 34,966 | 7.6 min | 76 | 847 |
+| medium 32K s2 | **69** | 6 | 1 | **playable with flaws** (the title screen throws every frame and shows no text, but Enter starts a working game) | 44,931 | 9.6 min | 78 | 796 |
+| xhigh 32K s1 | **68** | 8 | 1 | **playable with flaws** (divers leaving the bottom fly back up through the player's row) | 50,108 | 10.4 min | 80 | 2,073 |
+| xhigh 32K s2 | 51 | 8 | 4 | barely playable (entering enemies switch to the wrong state and vanish at their slot: no formation, no dives) | 54,513 | 9.8 min | 93 | 2,124 |
+
+| same machine, same reviewers | UD-Q4_K_XL | UD-Q6_K_XL | DeepSeek V4.1 2.25 bpw |
+| --- | --- | --- | --- |
+| RAM | 64 GB | 128 GB | 128 GB |
+| experts | a 40 GiB RAM budget, the rest from the SSD | all in RAM | 16% on the card, a 104 GB store, the rest from the SSD |
+| mean score /76 | 33.6 | 43.6 | **56.4** |
+| best run | 70 | 69 | 70 |
+| plays well / playable with flaws | 3 of 8 | 2 of 8 | 2 of 8 |
+| barely playable | 1 of 8 | 1 of 8 | 4 of 8 |
+| crashed at load or on start | 3 of 8 | 3 of 8 | **0 of 8** |
+| passed all 8 play checks | 5 of 8 | 5 of 8 | 4 of 8 |
+| decode, whole request | 30-56 tok/s | **76-99 tok/s** | 39-42 tok/s |
+| time for the 8 runs | 107 min | **54 min** | 117 min |
+| games with no severe bug | 1 | 0 | 1 |
+
+- **6-bit is not a clear step up from 4-bit here.** The mean is 10 points higher than UD-Q4's (43.6 against 33.6), the
+  best game a point lower (69 against 70), and the playable count one lower (2 against 3). The same seed does not give
+  the same token stream on two files, and single runs swing widely: UD-Q4's medium 32K pair scored 6 and 3 where Q6's
+  scored 53 and 69, and UD-Q4's medium 16K s1 scored 70 where Q6's scored 45. Eight runs cannot separate the two.
+- **The failures are the same kind as in every other round:** a name used that was never defined (`FPS`, `SPR.boss`),
+  a field never initialised (`player.y`, `fireCd`), a state name that does not match its handler. One such slip is
+  enough to make a game unplayable, and every Q6 game has at least one severe bug.
+- **The play-test passed three games that do not work** (off s2, medium 16K s1, medium 32K s1: 8/8 checks each, but
+  no enemies, no fighter or no shooting), and failed the best game (medium 32K s2, 6/8, because of the title-screen
+  exception). Its checks see motion and errors, not gameplay.
+- **Entry motion:** the xhigh 32K s1 reviewer notes that each arriving enemy jumps sideways at its slot (the path ends
+  at the unswayed slot, the formation sways up to 16 px); the DeepSeek medium 16K s1 game has the same snap (up to
+  3.5 px). The same mistake from a 6-bit Qwen file and a 2.25 bpw file of another model points more to what the models
+  know about Galaga than to quantization.
+- **Speed: the fastest Unsloth round, twice DeepSeek's.** 76-99 tok/s over every whole request, 54 minutes for the 8
+  runs, with no expert read from the SSD. Not hand-played yet: the games to play are
+  `out/5090-unsloth-ud-q6_k_xl-medium32k-s2.html` (69) and `out/5090-unsloth-ud-q6_k_xl-xhigh32k-s1.html` (68).
+
 ## What this does and does not show
 
 - **One-shot, this task is mostly failed by every quant: 2 playable games out of 12.** 7 of 12 never reach gameplay:
@@ -486,6 +540,8 @@ play-test and blind review (letters AX-BE, Claude Fable 5.1 reviewers like the o
 ../../.venv/Scripts/python.exe gen.py --prefix 5090- --quants unsloth-ud-q4_k_xl --arms off,medium,medium32k,xhigh32k   # ~110 min on 64 GB (SSD-mapped)
 ../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants deepseek41-2.25bpw --arms off,medium,medium32k,xhigh32k  # a running DeepSeek server, ~2 h
 pw/Scripts/python.exe playtest.py "5090-deepseek41*.html"   # a glob must end in .html: it would also load the .json records
+../../.venv/Scripts/python.exe gen.py --use-running --prefix 5090- --quants unsloth-ud-q6_k_xl --arms off,medium,medium32k,xhigh32k  # a running UD-Q6_K_XL server, ~1 h on 128 GB
+pw/Scripts/python.exe playtest.py "5090-unsloth-ud-q6*.html"
 python -m venv pw && pw/Scripts/pip install playwright pillow
 pw/Scripts/python.exe playtest.py && pw/Scripts/python.exe sheet.py
 python stats.py && python blind.py                          # then review each review/<letter>/ against rubric.md

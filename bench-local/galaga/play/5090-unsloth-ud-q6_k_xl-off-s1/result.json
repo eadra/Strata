@@ -1,0 +1,114 @@
+{
+ "loads_clean": false,
+ "canvas": true,
+ "title_drawn": false,
+ "animates_idle": false,
+ "starts": false,
+ "moves": false,
+ "survives_play": true,
+ "alive_at_end": false,
+ "passed": 2,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'rows')"
+  }
+ ],
+ "n_errors": 601
+}

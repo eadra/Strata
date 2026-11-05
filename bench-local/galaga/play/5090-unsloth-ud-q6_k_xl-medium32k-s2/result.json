@@ -1,0 +1,114 @@
+{
+ "loads_clean": false,
+ "canvas": true,
+ "title_drawn": true,
+ "animates_idle": true,
+ "starts": true,
+ "moves": true,
+ "survives_play": false,
+ "alive_at_end": true,
+ "passed": 6,
+ "errors": [
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.0,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  },
+  {
+   "kind": "pageerror",
+   "t": 0.1,
+   "text": "Cannot read properties of undefined (reading 'length')"
+  }
+ ],
+ "n_errors": 3473
+}

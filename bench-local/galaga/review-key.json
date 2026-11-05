@@ -55,5 +55,13 @@
  "BB": "5090-deepseek41-2.25bpw-medium-s1",
  "BC": "5090-deepseek41-2.25bpw-xhigh32k-s2",
  "BD": "5090-deepseek41-2.25bpw-medium32k-s1",
- "BE": "5090-deepseek41-2.25bpw-off-s2"
+ "BE": "5090-deepseek41-2.25bpw-off-s2",
+ "BF": "5090-unsloth-ud-q6_k_xl-medium-s1",
+ "BG": "5090-unsloth-ud-q6_k_xl-medium32k-s1",
+ "BH": "5090-unsloth-ud-q6_k_xl-xhigh32k-s1",
+ "BI": "5090-unsloth-ud-q6_k_xl-xhigh32k-s2",
+ "BJ": "5090-unsloth-ud-q6_k_xl-medium32k-s2",
+ "BK": "5090-unsloth-ud-q6_k_xl-medium-s2",
+ "BL": "5090-unsloth-ud-q6_k_xl-off-s1",
+ "BM": "5090-unsloth-ud-q6_k_xl-off-s2"
 }
